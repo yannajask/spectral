@@ -1,7 +1,6 @@
 #pragma once
 
-#include "math.hpp"
-#include "Ray.hpp"
+#include "utils.hpp"
 #include "Intersection.hpp"
 
 class Object {

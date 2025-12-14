@@ -1,7 +1,6 @@
 #pragma once
 
-#include "Ray.hpp"
-#include "math.hpp"
+#include "utils.hpp"
 
 class Camera {
     public:

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "math.hpp"
+#include "utils.hpp"
 
 class Ray {
     public:

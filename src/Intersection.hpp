@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Ray.hpp"
+#include "utils.hpp"
 
 class Intersection {
     public:
