@@ -18,9 +18,13 @@ class Camera {
             aspect = (float)width / (float)height;
         }
 
-        Ray getRay(float u, float v) {
-            float ndc_x = (2.0f * (u + 0.5f) / (float)width - 1.0f) * scale;
-            float ndc_y = (1.0f - 2.0f * (v + 0.5f) / (float)height) * scale * 1.0f / aspect;
+        Ray getRay(float u, float v) const {
+            Vec3 offset = sampleSquare();
+            float px = u + offset.x;
+            float py = v + offset.y;
+
+            float ndc_x = (2.0f * (px + 0.5f) / (float)width - 1.0f) * scale;
+            float ndc_y = (1.0f - 2.0f * (py + 0.5f) / (float)height) * scale * 1.0f / aspect;
 
             Vec3 orig = Vec3(0.0f, 0.0f, 0.0f);
             Vec3 dir = glm::normalize(Vec3(ndc_x, ndc_y, -1.0f));

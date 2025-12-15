@@ -19,8 +19,10 @@ Vec3 rayColour(const Ray& ray, const Scene& scene) {
 }
 
 int main() {
-    unsigned int width = 800;
-    unsigned int height = 600;
+    constexpr unsigned int samplesPerPixel = 10;
+
+    constexpr unsigned int width = 800;
+    constexpr unsigned int height = 600;
     Camera camera(width, height, 45.0f, Mat4x4(1.0f));
 
     Scene scene;
@@ -34,8 +36,14 @@ int main() {
     std::cout << "P3\n" << width << " " << height << "\n255\n";
     for (unsigned int row = 0; row < height; row++) {
         for (unsigned int col = 0; col < width; col++) {
-            Ray ray = camera.getRay(col, row);
-            Vec3 colour = rayColour(ray, scene);
+            Vec3 colour(0.0f);
+
+            for (unsigned int sample = 0; sample < samplesPerPixel; sample++) {
+                Ray ray = camera.getRay(col, row);
+                colour += rayColour(ray, scene);
+            }
+
+            colour /= samplesPerPixel;
 
             int r = int(255.999f * glm::clamp(colour.x, 0.0f, 1.0f));
             int g = int(255.999f * glm::clamp(colour.y, 0.0f, 1.0f));

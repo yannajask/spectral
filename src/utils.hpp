@@ -17,16 +17,20 @@ using std::shared_ptr;
 inline thread_local std::mt19937 rng(std::random_device{}());
 inline thread_local std::uniform_real_distribution<float> distribution(0.0, 1.0);
 
-inline float randomf() {
+inline float randf() {
     return distribution(rng);
 }
 
-inline float randomf(float min, float max) {
-    return min + (max - min) * randomf();
+inline float randf(float min, float max) {
+    return min + (max - min) * randf();
 }
 
-inline int randomi(int min, int max) {
-    return int(randomf(min, max + 1));
+inline int randi(int min, int max) {
+    return int(randf(min, max + 1));
+}
+
+inline Vec3 sampleSquare() {
+    return Vec3(randf() - 0.5f, randf() - 0.5f, 0.0f);
 }
 
 constexpr float infinity = std::numeric_limits<float>::infinity();
