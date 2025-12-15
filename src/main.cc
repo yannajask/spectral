@@ -1,17 +1,19 @@
 #include <memory>
 #include <iostream>
 
-#include "Object.hpp"
-#include "Scene.hpp"
-#include "Camera.hpp"
-#include "Ray.hpp"
+#include "geometry/Object.h"
+#include "geometry/Triangle.h"
+#include "geometry/Sphere.h"
+#include "geometry/Scene.h"
+#include "Camera.h"
+#include "geometry/Ray.h"
 
 // to do: move this elsewhere (and obvisouly make generic)
 Vec3 rayColour(const Ray& ray, const Scene& scene) {
-    Intersection intersection;
-    if (scene.intersect(ray, 0.001f, infinity, intersection)) {
-        Vec3 direction = rand3fhs(intersection.normal);
-        return 0.5f * rayColour(Ray(intersection.p, direction), scene);
+    HitRecord record;
+    if (scene.hit(ray, 0.001f, infinity, record)) {
+        Vec3 direction = rand3fhs(record.normal);
+        return 0.5f * rayColour(Ray(record.p, direction), scene);
     } else {
         Vec3 unitDirection = glm::normalize(ray.dir);
         float a = 0.5f * (unitDirection.y + 1.0f);

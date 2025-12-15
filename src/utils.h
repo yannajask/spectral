@@ -74,4 +74,4 @@ constexpr Vec3 transformPointMatrix(const Mat4x4& A, const Vec3& v) {
     return Vec3(tmp.x, tmp.y, tmp.z);
 }
 
-#include "Ray.hpp"
+#include "geometry/Ray.h"

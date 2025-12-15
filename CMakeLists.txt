@@ -10,5 +10,10 @@ link_directories(/opt/homebrew/lib)
 
 set(CXX_FLAGS "-Wall -g -O3")
 
-add_executable(spectral src/main.cpp)
+add_executable(spectral 
+    src/main.cc
+    src/geometry/Sphere.cc
+    src/geometry/Triangle.cc
+    src/geometry/Scene.cc
+)
 include_directories(src)
