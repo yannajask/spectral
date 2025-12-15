@@ -10,7 +10,8 @@
 Vec3 rayColour(const Ray& ray, const Scene& scene) {
     Intersection intersection;
     if (scene.intersect(ray, 0.001f, infinity, intersection)) {
-        return 0.5f * (intersection.normal + Vec3(1.0f));
+        Vec3 direction = rand3fhs(intersection.normal);
+        return 0.5f * rayColour(Ray(intersection.p, direction), scene);
     } else {
         Vec3 unitDirection = glm::normalize(ray.dir);
         float a = 0.5f * (unitDirection.y + 1.0f);
@@ -19,7 +20,7 @@ Vec3 rayColour(const Ray& ray, const Scene& scene) {
 }
 
 int main() {
-    constexpr unsigned int samplesPerPixel = 10;
+    constexpr unsigned int samplesPerPixel = 20;
 
     constexpr unsigned int width = 800;
     constexpr unsigned int height = 600;

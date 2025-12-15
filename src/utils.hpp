@@ -29,6 +29,31 @@ inline int randi(int min, int max) {
     return int(randf(min, max + 1));
 }
 
+inline Vec3 rand3f() {
+    return Vec3(randf(), randf(), randf());
+}
+
+inline Vec3 rand3f(float min, float max) {
+    return Vec3(randf(min, max), randf(min, max), randf(min, max));
+}
+
+inline Vec3 rand3funit() {
+    while (true) {
+        Vec3 p = rand3f(-1, 1);
+        float lensq = glm::length2(p);
+        if (1e-160 < lensq && lensq <= 1) return p / sqrt(lensq);
+    }
+}
+
+inline Vec3 rand3fhs(const Vec3& normal) {
+    Vec3 unit = rand3funit();
+    if (glm::dot(unit, normal) > 0.0f) {
+        return unit;
+    } else {
+        return -unit;
+    }
+}
+
 inline Vec3 sampleSquare() {
     return Vec3(randf() - 0.5f, randf() - 0.5f, 0.0f);
 }
