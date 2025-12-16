@@ -7,6 +7,7 @@
 #include "geometry/Scene.h"
 #include "Camera.h"
 #include "geometry/Ray.h"
+#include "geometry/Mesh.h"
 
 // to do: move this elsewhere (and obvisouly make generic)
 Vec3 rayColour(const Ray& ray, const Scene& scene) {
@@ -22,8 +23,7 @@ Vec3 rayColour(const Ray& ray, const Scene& scene) {
 }
 
 int main() {
-    constexpr unsigned int samplesPerPixel = 20;
-
+    constexpr unsigned int samplesPerPixel = 10;
     constexpr unsigned int width = 800;
     constexpr unsigned int height = 600;
     Camera camera(width, height, 45.0f, Mat4x4(1.0f));
@@ -38,6 +38,8 @@ int main() {
 
     std::cout << "P3\n" << width << " " << height << "\n255\n";
     for (unsigned int row = 0; row < height; row++) {
+        std::clog << "Lines: " << (row + 1) << " / " << height << "         " << std::flush;
+
         for (unsigned int col = 0; col < width; col++) {
             Vec3 colour(0.0f);
 
