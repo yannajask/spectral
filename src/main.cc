@@ -3,6 +3,7 @@
 #include <chrono>
 
 #include "geometry/Object.h"
+#include "geometry/Transform.h"
 #include "geometry/Triangle.h"
 #include "geometry/Sphere.h"
 #include "geometry/Scene.h"
@@ -42,13 +43,15 @@ int main(int argc, char *argv[]) {
     constexpr unsigned int width = 800;
     constexpr unsigned int height = 600;
     
-    Vec3 lookfrom = Vec3(0.0f, 5.0f, 40.0f);
+    Vec3 lookfrom = Vec3(20.0f, 30.0f, 40.0f);
     Vec3 lookat = Vec3(0.0f, 0.0f, 0.0f);
 
     Camera camera(lookfrom, lookat, width, height, 75.0f);
 
     Scene scene;
-    scene.add(make_shared<Mesh>("assets/teddy.obj"));
+    auto teddy = make_shared<Mesh>("assets/teddy.obj");
+    scene.add(make_shared<RotateY>(teddy, 120.0f));
+    //scene.add(make_shared<Mesh>("assets/teddy.obj"));
     scene.buildBVH();
 
     auto start = std::chrono::high_resolution_clock::now();
@@ -61,7 +64,7 @@ int main(int argc, char *argv[]) {
 
             for (unsigned int sample = 0; sample < samplesPerPixel; sample++) {
                 Ray ray = camera.getRay(col, row);
-                colour += rayColour(ray, scene, 50);
+                colour += rayColour(ray, scene, 10);
             }
 
             colour /= samplesPerPixel;

@@ -44,13 +44,3 @@ bool AABB::hit(const Ray& ray, float tmin, float tmax) const {
 
     return (txmin <= tmax && txmax >= tmin);
 }
-
-void AABB::add(const AABB& other) {
-    bounds[0].x = std::min(bounds[0].x, other.bounds[0].x);
-    bounds[0].y = std::min(bounds[0].y, other.bounds[0].y);
-    bounds[0].z = std::min(bounds[0].z, other.bounds[0].z);
-
-    bounds[1].x = std::max(bounds[1].x, other.bounds[1].x);
-    bounds[1].y = std::max(bounds[1].y, other.bounds[1].y);
-    bounds[1].z = std::max(bounds[1].z, other.bounds[1].z);
-}

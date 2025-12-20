@@ -21,6 +21,7 @@ add_executable(spectral
     src/geometry/Mesh.cc
     src/geometry/AABB.cc
     src/geometry/BVH.cc
+    src/geometry/Transform.cc
     extern/lodepng/lodepng.cpp
 )
 

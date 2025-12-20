@@ -10,8 +10,6 @@ class AABB {
 
         bool hit(const Ray& ray, float tmin, float tmax) const;
 
-        void add(const AABB& other);
-
         constexpr Vec3 min() const;
         constexpr Vec3 max() const;
         constexpr Vec3 center() const;
@@ -37,4 +35,8 @@ constexpr Vec3 AABB::center() const {
 constexpr unsigned int AABB::longestAxis() const {
     const Vec3 d = bounds[1] - bounds[0];
     return (d.x > d.y && d.x > d.z) ? 0 : (d.y > d.z ? 1 : 2);
+}
+
+inline AABB operator+(const AABB& box, const Vec3& offset) {
+    return AABB(box.min() + offset, box.max() + offset);
 }
