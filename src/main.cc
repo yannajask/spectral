@@ -1,5 +1,6 @@
 #include <memory>
 #include <iostream>
+#include <chrono>
 
 #include "geometry/Object.h"
 #include "geometry/Triangle.h"
@@ -40,6 +41,8 @@ int main() {
     scene.add(make_shared<Mesh>("assets/teddy.obj"));
     scene.buildBVH();
 
+    auto start = std::chrono::high_resolution_clock::now();
+
     std::cout << "P3\n" << width << " " << height << "\n255\n";
     for (unsigned int row = 0; row < height; row++) {
         std::clog << "\rLines: " << (row + 1) << " / " << height << "                 " << std::flush;
@@ -61,4 +64,8 @@ int main() {
             std::cout << r << ' ' << g << ' ' << b << '\n';
         }
     }
+
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> time = end - start;
+    std::clog << "\rTime: " << time.count() <<  "s            " << std::flush;
 }

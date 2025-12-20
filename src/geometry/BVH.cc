@@ -13,11 +13,15 @@ bool BVH::hit(const Ray& ray, float tmin, float tmax, HitRecord& record, unsigne
     if (!node.bbox.hit(ray, tmin, tmax)) return false;
 
     if (node.isLeaf()) {
+        HitRecord tmp;
         bool hit = false;
+        float closest = tmax;
+
         for (unsigned int i = 0; i < node.count; i++) {
-            if (objects[node.first + i]->hit(ray, tmin, tmax, record)) {
+            if (objects[node.first + i]->hit(ray, tmin, closest, tmp)) {
                 hit = true;
-                tmax = record.t;
+                closest = tmp.t;
+                record = tmp;
             }
         }
 
@@ -30,21 +34,16 @@ bool BVH::hit(const Ray& ray, float tmin, float tmax, HitRecord& record, unsigne
 }
 
 unsigned int BVH::build(size_t start, size_t end) {
-    //nodes.emplace_back();
-    //unsigned int idx = nodes.size() - 1;
-
-    AABB bbox = objects[start]->bbox();
-    for (size_t i = start + 1; i < end; i++) {
+    AABB bbox;
+    for (size_t i = start; i < end; i++) {
         bbox = AABB(bbox, objects[i]->bbox());
     }
-    
-    //nodes[idx].bbox = bbox;
 
     size_t count = end - start;
     BVHNode node{};
     node.bbox = bbox;
 
-    if (count <= 4) {
+    if (count <= 2) { // leaf nodes can carry up to 2 objects
         node.first = static_cast<unsigned int>(start);
         node.count = static_cast<unsigned int>(count);
         node.left = node.right = 0;
@@ -62,14 +61,13 @@ unsigned int BVH::build(size_t start, size_t end) {
         std::nth_element(objects.begin() + start, objects.begin() + mid, objects.begin() + end, comparator);
 
         nodes.push_back(node);
-        unsigned int idx = static_cast<unsigned int>(nodes.size() - 1);
 
+        unsigned int idx = static_cast<unsigned int>(nodes.size() - 1);
         unsigned int leftidx = build(start, mid);
         unsigned int rightidx = build(mid, end);
 
         nodes[idx].left = leftidx;
         nodes[idx].right = rightidx;
-
         return idx;
     }
 }
