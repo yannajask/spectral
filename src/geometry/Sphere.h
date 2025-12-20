@@ -14,5 +14,4 @@ class Sphere : public Object {
     private:
         Vec3 center;
         float radius;
-        AABB _bbox;
 };

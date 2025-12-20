@@ -1,7 +1,8 @@
 #include "Sphere.h"
 
-Sphere::Sphere(const Vec3& center, float radius)
-    : center(center), radius(radius), _bbox(center - radius, center + radius) {}
+Sphere::Sphere(const Vec3& center, float radius) : center(center), radius(radius) {
+    _bbox = AABB(center - radius, center + radius);
+}
 
 bool Sphere::hit(const Ray& ray, float tmin, float tmax, HitRecord& record) const {
     Vec3 oc = center - ray.orig;

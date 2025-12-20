@@ -13,5 +13,4 @@ class Triangle : public Object {
 
     private:
         Vec3 v0, v1, v2;
-        AABB _bbox;
 };
