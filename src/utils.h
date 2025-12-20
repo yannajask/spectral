@@ -68,14 +68,4 @@ constexpr float radians(float degrees) {
     return degrees * (M_PI / 180.0f);
 }
 
-constexpr Vec3 transformDirMatrix(const Mat4x4& A, const Vec3& v) {
-    Vec4 tmp = A * Vec4(v, 0.0f);
-    return Vec3(tmp.x, tmp.y, tmp.z);
-}
-
-constexpr Vec3 transformPointMatrix(const Mat4x4& A, const Vec3& v) {
-    Vec4 tmp = A * Vec4(v, 1.0f);
-    return Vec3(tmp.x, tmp.y, tmp.z);
-}
-
 #include "geometry/Ray.h"

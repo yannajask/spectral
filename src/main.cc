@@ -33,10 +33,8 @@ int main() {
     
     Vec3 lookfrom = Vec3(0.0f, 5.0f, 40.0f);
     Vec3 lookat = Vec3(0.0f, 0.0f, 0.0f);
-    Vec3 up = Vec3(0.0f, 1.0f, 0.0f);
 
-    Mat4x4 view = glm::lookAt(lookfrom, lookat, up);
-    Camera camera(width, height, 75.0f, glm::inverse(view));
+    Camera camera(lookfrom, lookat, width, height, 75.0f);
 
     Scene scene;
     scene.add(make_shared<Mesh>("assets/teddy.obj"));
