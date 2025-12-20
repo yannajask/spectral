@@ -23,15 +23,15 @@ class Camera {
             float px = u + offset.x;
             float py = v + offset.y;
 
-            float ndc_x = (2.0f * (px + 0.5f) / (float)width - 1.0f) * scale;
-            float ndc_y = (1.0f - 2.0f * (py + 0.5f) / (float)height) * scale * 1.0f / aspect;
-
+            float ndc_x = (2.0f * (px + 0.5f) / (float)width - 1.0f) * scale * aspect;
+            float ndc_y = (1.0f - 2.0f * (py + 0.5f) / (float)height) * scale;
             Vec3 orig = Vec3(0.0f, 0.0f, 0.0f);
             Vec3 dir = glm::normalize(Vec3(ndc_x, ndc_y, -1.0f));
 
+            // to do: fix this later to make it prettier
             Ray ray;
             ray.orig = transformPointMatrix(view, orig);
             ray.dir = transformDirMatrix(view, dir);
-            return ray;
+            return Ray(ray.orig, ray.dir);
         }
 };

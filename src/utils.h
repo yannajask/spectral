@@ -3,6 +3,7 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/glm.hpp>
 #include <glm/gtx/norm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 #include <random>
 #include <cmath>
 #include <limits>
@@ -13,6 +14,9 @@ typedef glm::mat4x4 Mat4x4;
 
 using std::make_shared;
 using std::shared_ptr;
+
+using std::make_unique;
+using std::unique_ptr;
 
 inline thread_local std::mt19937 rng(std::random_device{}());
 inline thread_local std::uniform_real_distribution<float> distribution(0.0, 1.0);
@@ -65,7 +69,7 @@ constexpr float radians(float degrees) {
 }
 
 constexpr Vec3 transformDirMatrix(const Mat4x4& A, const Vec3& v) {
-    Vec4 tmp = glm::normalize(A * Vec4(v, 0.0f));
+    Vec4 tmp = A * Vec4(v, 0.0f);
     return Vec3(tmp.x, tmp.y, tmp.z);
 }
 

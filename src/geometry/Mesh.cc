@@ -4,7 +4,7 @@
 #include <iostream>
 #include <charconv>
 
-explicit Mesh::Mesh(const std::string& objPath) {
+Mesh::Mesh(const std::string& objPath) {
     // to do: move this into a utility class or function
     // also want to expand functionality later
     std::ifstream objFile(objPath);
@@ -32,28 +32,22 @@ explicit Mesh::Mesh(const std::string& objPath) {
             addTriangle(vertices[i - 1], vertices[j - 1], vertices[k - 1]);
         }
     }
+
+    bvh = make_unique<BVH>(triangles);
 }
 
-void Mesh::addTriangle(const Triangle& triangle) {
+void Mesh::addTriangle(shared_ptr<Triangle> triangle) {
     triangles.push_back(triangle);
 }
 
 void Mesh::addTriangle(const Vec3& a, const Vec3& b, const Vec3&c) {
-    triangles.push_back(Triangle(a, b, c));
+    triangles.push_back(make_shared<Triangle>(a, b, c));
 }
 
 bool Mesh::hit(const Ray& ray, float tmin, float tmax, HitRecord& record) const {
-    HitRecord tmp;
-    bool hit = false;
-    float closest = tmax;
+    return bvh->hit(ray, tmin, tmax, record, bvh->root);
+}
 
-    for (const Triangle& triangle: triangles) {
-        if (triangle.hit(ray, tmin, closest, tmp)) {
-            hit = true;
-            closest = tmp.t;
-            record = tmp;
-        }
-    }
-
-    return hit;
+AABB Mesh::bbox() const {
+    return bvh->bbox();
 }

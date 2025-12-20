@@ -1,6 +1,10 @@
 #include "Triangle.h"
 
-Triangle::Triangle(const Vec3& a, const Vec3& b, const Vec3& c) : v0(a), v1(b), v2(c) {}
+Triangle::Triangle(const Vec3& a, const Vec3& b, const Vec3& c) : v0(a), v1(b), v2(c) {
+    Vec3 vmin = glm::min(v0, v1, v2);
+    Vec3 vmax = glm::max(v0, v1, v2);
+    _bbox = AABB(vmin, vmax);
+}
 
 // moller-trumbore algorithm
 bool Triangle::hit(const Ray& ray, float tmin, float tmax, HitRecord& record) const {
@@ -32,4 +36,8 @@ bool Triangle::hit(const Ray& ray, float tmin, float tmax, HitRecord& record) co
     record.setFaceNormal(ray, outwardNormal);
 
     return true;
+}
+
+AABB Triangle::bbox() const {
+    return _bbox;
 }

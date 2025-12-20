@@ -15,5 +15,8 @@ add_executable(spectral
     src/geometry/Sphere.cc
     src/geometry/Triangle.cc
     src/geometry/Scene.cc
+    src/geometry/Mesh.cc
+    src/geometry/AABB.cc
+    src/geometry/BVH.cc
 )
 include_directories(src)

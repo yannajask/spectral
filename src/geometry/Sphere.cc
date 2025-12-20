@@ -1,6 +1,7 @@
 #include "Sphere.h"
 
-Sphere::Sphere(const Vec3& center, float radius) : center(center), radius(radius) {}
+Sphere::Sphere(const Vec3& center, float radius)
+    : center(center), radius(radius), _bbox(center - radius, center + radius) {}
 
 bool Sphere::hit(const Ray& ray, float tmin, float tmax, HitRecord& record) const {
     Vec3 oc = center - ray.orig;
@@ -25,4 +26,8 @@ bool Sphere::hit(const Ray& ray, float tmin, float tmax, HitRecord& record) cons
     record.setFaceNormal(ray, outwardNormal);
 
     return true;
+}
+
+AABB Sphere::bbox() const {
+    return _bbox;
 }

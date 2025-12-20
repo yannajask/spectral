@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Object.h"
+#include "AABB.h"
 
 class Triangle : public Object {
     public:
@@ -8,6 +9,9 @@ class Triangle : public Object {
 
         virtual bool hit(const Ray& ray, float tmin, float tmax, HitRecord& record) const override;
 
+        virtual AABB bbox() const override;
+
     private:
         Vec3 v0, v1, v2;
+        AABB _bbox;
 };
