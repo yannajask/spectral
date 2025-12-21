@@ -1,6 +1,6 @@
 #include "Sphere.h"
 
-Sphere::Sphere(const Vec3& center, float radius) : center(center), radius(radius) {
+Sphere::Sphere(const Vec3& center, float radius, shared_ptr<Material> mat) : center(center), radius(radius), mat(mat) {
     _bbox = AABB(center - radius, center + radius);
 }
 
@@ -25,6 +25,7 @@ bool Sphere::hit(const Ray& ray, float tmin, float tmax, HitRecord& record) cons
     record.p = ray.at(root);
     Vec3 outwardNormal = (record.p - center) / radius;
     record.setFaceNormal(ray, outwardNormal);
+    record.mat = mat;
 
     return true;
 }

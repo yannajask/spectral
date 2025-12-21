@@ -1,6 +1,7 @@
 #include "Triangle.h"
 
-Triangle::Triangle(const Vec3& a, const Vec3& b, const Vec3& c) : v0(a), v1(b), v2(c) {
+Triangle::Triangle(const Vec3& a, const Vec3& b, const Vec3& c, shared_ptr<Material> mat)
+     : v0(a), v1(b), v2(c), mat(mat) {
     Vec3 vmin = glm::min(v0, v1, v2);
     Vec3 vmax = glm::max(v0, v1, v2);
     _bbox = AABB(vmin, vmax);
@@ -34,6 +35,7 @@ bool Triangle::hit(const Ray& ray, float tmin, float tmax, HitRecord& record) co
     record.p = ray.at(t);
     Vec3 outwardNormal = glm::normalize(glm::cross(e1, e2));
     record.setFaceNormal(ray, outwardNormal);
+    record.mat = mat;
 
     return true;
 }

@@ -7,7 +7,7 @@
 
 class Mesh : public Object {
     public:
-        explicit Mesh(const std::string& objPath);
+        Mesh(const std::string& objPath, shared_ptr<Material> mat);
 
         void addTriangle(shared_ptr<Triangle> triangle);
 
@@ -20,4 +20,5 @@ class Mesh : public Object {
     private:
         std::vector<shared_ptr<Object>> triangles;
         unique_ptr<BVH> bvh;
+        shared_ptr<Material> mat;
 };

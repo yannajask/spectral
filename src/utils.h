@@ -68,4 +68,15 @@ constexpr float radians(float degrees) {
     return degrees * (M_PI / 180.0f);
 }
 
+constexpr Vec3 reflect(const Vec3& v, const Vec3& n) {
+    return v - 2 * glm::dot(v, n) * n;
+}
+
+inline Vec3 refract(const Vec3& uv, const Vec3& n, float ratio) {
+    float cosTheta = std::fmin(dot(-uv, n), 1.0f);
+    Vec3 perp = ratio * (uv + cosTheta * n);
+    Vec3 parallel = -std::sqrt(std::fabs(1.0f - glm::length2(perp))) * n;
+    return perp + parallel;
+}
+
 #include "geometry/Ray.h"

@@ -11,7 +11,7 @@ include_directories(extern/lodepng)
 
 link_directories(/opt/homebrew/lib)
 
-set(CXX_FLAGS "-Wall -g -O3")
+set(CXX_FLAGS "-Wall -g -O3 -march=native -ffast-math")
 
 add_executable(spectral 
     src/main.cc
@@ -22,6 +22,7 @@ add_executable(spectral
     src/geometry/AABB.cc
     src/geometry/BVH.cc
     src/geometry/Transform.cc
+    src/materials/Dielectric.cc
     extern/lodepng/lodepng.cpp
 )
 

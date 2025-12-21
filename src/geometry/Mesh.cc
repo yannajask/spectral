@@ -4,7 +4,7 @@
 #include <iostream>
 #include <charconv>
 
-Mesh::Mesh(const std::string& objPath) {
+Mesh::Mesh(const std::string& objPath, shared_ptr<Material> mat) : mat(mat) {
     // to do: move this into a utility class or function
     // also want to expand functionality later
     std::ifstream objFile(objPath);
@@ -41,7 +41,7 @@ void Mesh::addTriangle(shared_ptr<Triangle> triangle) {
 }
 
 void Mesh::addTriangle(const Vec3& a, const Vec3& b, const Vec3&c) {
-    triangles.push_back(make_shared<Triangle>(a, b, c));
+    triangles.push_back(make_shared<Triangle>(a, b, c, mat));
 }
 
 bool Mesh::hit(const Ray& ray, float tmin, float tmax, HitRecord& record) const {

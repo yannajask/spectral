@@ -2,10 +2,11 @@
 
 #include "Object.h"
 #include "AABB.h"
+#include "../materials/Material.h"
 
 class Sphere : public Object {
     public:
-        Sphere(const Vec3& center, float radius);
+        Sphere(const Vec3& center, float radius, shared_ptr<Material> mat);
 
         virtual bool hit(const Ray& ray, float tmin, float tmax, HitRecord& record) const override;
 
@@ -14,4 +15,5 @@ class Sphere : public Object {
     private:
         Vec3 center;
         float radius;
+        shared_ptr<Material> mat;
 };
