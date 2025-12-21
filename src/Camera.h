@@ -5,6 +5,7 @@
 #include "geometry/HitRecord.h"
 #define LODEPNG_COMPILE_CPP
 #include "../extern/lodepng/lodepng.h"
+#include <omp.h>
 
 // to do: clean up initialization
 // skybox feature could also be awesome
@@ -20,7 +21,7 @@ class Camera {
         Vec3 background;
 
         Camera(const Vec3& lookfrom, const Vec3& lookat, unsigned int width, unsigned int height, float fov)
-            : lookfrom(lookfrom), width(width), height(height), fov(fov) {
+            : width(width), height(height), fov(fov), lookfrom(lookfrom) {
             scale = tan(radians(fov * 0.5f));
             aspect = (float)width / (float)height;
 
@@ -30,10 +31,11 @@ class Camera {
         }
 
         void render(const Scene& scene, std::string& outputPath) {
-            std::vector<unsigned char> image(width * height * 4, 255);    
+            std::vector<unsigned char> image(width * height * 4, 255);
+            unsigned int rowsProcessed = 0;
+            
+            #pragma omp parallel for
             for (unsigned int row = 0; row < height; row++) {
-                std::clog << "\rLine: " << (row + 1) << " / " << height << "                " << std::flush;
-
                 for (unsigned int col = 0; col < width; col++) {
                     Vec3 colour(0.0f);
 
@@ -54,6 +56,12 @@ class Camera {
                     image[idx + 2] = static_cast<unsigned char>(b);
                     image[idx + 3] = 255;
                 }
+
+                #pragma omp atomic
+                rowsProcessed++;
+
+                #pragma omp critical
+                std::clog << "\rLine: " << rowsProcessed << " / " << height << "                " << std::flush;
             }
 
             lodepng::encode(outputPath, image, width, height);

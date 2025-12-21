@@ -11,7 +11,13 @@ include_directories(extern/lodepng)
 
 link_directories(/opt/homebrew/lib)
 
-set(CXX_FLAGS "-Wall -g -O3 -march=native -ffast-math")
+set(OpenMP_C_FLAGS "-fopenmp")
+set(OpenMP_CXX_FLAGS "-fopenmp -Wall -g -O3 -march=native")
+set(OpenMP_C_LIB_NAMES "omp")
+set(OpenMP_CXX_LIB_NAMES "omp")
+set(OpenMP_omp_LIBRARY "/opt/homebrew/opt/llvm/lib/libomp.dylib")
+
+find_package(OpenMP REQUIRED)
 
 add_executable(spectral 
     src/main.cc
@@ -26,4 +32,5 @@ add_executable(spectral
     extern/lodepng/lodepng.cpp
 )
 
+target_link_libraries(spectral PRIVATE OpenMP::OpenMP_CXX)
 include_directories(src)
