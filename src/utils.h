@@ -10,7 +10,6 @@
 
 typedef glm::vec3 Vec3;
 typedef glm::vec4 Vec4;
-typedef glm::mat4x4 Mat4x4;
 
 using std::make_shared;
 using std::shared_ptr;

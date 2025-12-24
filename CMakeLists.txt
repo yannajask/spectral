@@ -29,7 +29,6 @@ add_executable(spectral
     src/geometry/BVH.cc
     src/geometry/Transform.cc
     src/materials/Dielectric.cc
-    extern/lodepng/lodepng.cpp
 )
 
 target_link_libraries(spectral PRIVATE OpenMP::OpenMP_CXX)

@@ -16,4 +16,6 @@ class Sphere : public Object {
         Vec3 center;
         float radius;
         shared_ptr<Material> mat;
+
+        static void getUV(float &u, float &v, Vec3& p);
 };

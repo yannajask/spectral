@@ -27,10 +27,10 @@ int main(int argc, char *argv[]) {
     Camera camera(lookfrom, lookat, 800, 600, 75.0f);
     camera.samplesPerPixel = 25;
     camera.maxDepth = 25;
-    camera.background = Vec3(0.5f, 0.7f, 1.0f);
+    camera.background = Vec3(0.6f, 0.7f, 1.0f);
 
     Scene scene;
-    auto redMat = make_shared<Dielectric>(Vec3(0.9f, 0.5f, 0.5f), 1.33f);
+    auto redMat = make_shared<Dielectric>(Vec3(0.9f, 0.6f, 0.6f), 1.33f);
     auto teddy = make_shared<Mesh>("assets/teddy.obj", redMat);
     scene.add(make_shared<RotateY>(teddy, 45.0f));
     scene.buildBVH();

@@ -3,9 +3,11 @@
 #include "utils.h"
 #include "geometry/Scene.h"
 #include "geometry/HitRecord.h"
-#define LODEPNG_COMPILE_CPP
-#include "../extern/lodepng/lodepng.h"
-#include <omp.h>
+#define STB_IMAGE_IMPLEMENTATION
+#include "../extern/stb/stb_image.h"
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "../extern/stb/stb_image_write.h"
+#include "omp.h"
 
 // to do: clean up initialization
 // skybox feature could also be awesome
@@ -31,7 +33,7 @@ class Camera {
         }
 
         void render(const Scene& scene, std::string& outputPath) {
-            std::vector<unsigned char> image(width * height * 4, 255);
+            std::vector<unsigned char> image(width * height * 3, 255);
             unsigned int rowsProcessed = 0;
             
             #pragma omp parallel for
@@ -50,11 +52,10 @@ class Camera {
                     int g = int(255.999f * glm::clamp(colour.y, 0.0f, 1.0f));
                     int b = int(255.999f * glm::clamp(colour.z, 0.0f, 1.0f));
 
-                    size_t idx = 4 * (row * width + col);
+                    size_t idx = 3 * (row * width + col);
                     image[idx + 0] = static_cast<unsigned char>(r);
                     image[idx + 1] = static_cast<unsigned char>(g);
                     image[idx + 2] = static_cast<unsigned char>(b);
-                    image[idx + 3] = 255;
                 }
 
                 #pragma omp atomic
@@ -64,7 +65,7 @@ class Camera {
                 std::clog << "\rLine: " << rowsProcessed << " / " << height << "                " << std::flush;
             }
 
-            lodepng::encode(outputPath, image, width, height);
+            stbi_write_png(outputPath.c_str(), width, height, 3, image.data(), width * 3);
             std::clog << "\rSaved to: " << outputPath << std::endl;
         }
 

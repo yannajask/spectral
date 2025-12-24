@@ -25,6 +25,7 @@ bool Sphere::hit(const Ray& ray, float tmin, float tmax, HitRecord& record) cons
     record.p = ray.at(root);
     Vec3 outwardNormal = (record.p - center) / radius;
     record.setFaceNormal(ray, outwardNormal);
+    getUV(record.u, record.v, outwardNormal);
     record.mat = mat;
 
     return true;
@@ -32,4 +33,11 @@ bool Sphere::hit(const Ray& ray, float tmin, float tmax, HitRecord& record) cons
 
 AABB Sphere::bbox() const {
     return _bbox;
+}
+
+void Sphere::getUV(float &u, float &v, Vec3& p) {
+    float theta = std::acos(-p.y);
+    double phi = std::atan2(-p.z, p.x) + M_PI;
+    u = phi / (2 * M_PI);
+    v = theta / M_PI;
 }
