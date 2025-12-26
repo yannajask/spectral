@@ -8,8 +8,8 @@
 #include <cmath>
 #include <limits>
 
-typedef glm::vec3 Vec3;
-typedef glm::vec4 Vec4;
+using Vec2 = glm::vec2;
+using Vec3 = glm::vec3;
 
 using std::make_shared;
 using std::shared_ptr;

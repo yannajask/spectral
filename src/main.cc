@@ -21,7 +21,7 @@ int main(int argc, char *argv[]) {
     }
     std::string file = argv[1];
     
-    Vec3 lookfrom = Vec3(20.0f, 30.0f, 40.0f);
+    Vec3 lookfrom = Vec3(2.0f, 10.0f, 10.0f);
     Vec3 lookat = Vec3(0.0f, 0.0f, 0.0f);
 
     Camera camera(lookfrom, lookat, 800, 600, 75.0f);
@@ -31,8 +31,8 @@ int main(int argc, char *argv[]) {
 
     Scene scene;
     auto redMat = make_shared<Dielectric>(Vec3(0.9f, 0.6f, 0.6f), 1.33f);
-    auto teddy = make_shared<Mesh>("assets/teddy.obj", redMat);
-    scene.add(make_shared<RotateY>(teddy, 45.0f));
+    auto shuttle = make_shared<Mesh>("assets/shuttle.obj", redMat);
+    scene.add(make_shared<RotateY>(shuttle, 45.0f));
     scene.buildBVH();
 
     auto start = std::chrono::high_resolution_clock::now();

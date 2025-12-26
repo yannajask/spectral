@@ -1,4 +1,5 @@
 #include "Mesh.h"
+#include "../ObjLoader.h"
 #include <fstream>
 #include <sstream>
 #include <iostream>
@@ -6,30 +7,97 @@
 
 Mesh::Mesh(const std::string& objPath, shared_ptr<Material> mat) : mat(mat) {
     // to do: move this into a utility class or function
-    // also want to expand functionality later
     std::ifstream objFile(objPath);
+
     std::vector<Vec3> vertices;
+    std::vector<Vec2> uvs;
+    std::vector<Vec3> normals;
+
     std::string line;
-
     while (std::getline(objFile, line)) {
-        std::stringstream ss(line);
-        std::string op;
-        ss >> op;
+        std::string_view view(line);
+        size_t split = view.find(' ');
+        if (split == std::string_view::npos) continue;
 
-        if (op == "v") {
+        std::string_view type = view.substr(0, split);
+        std::string data(view.substr(split + 1));
+        std::stringstream ss(data);
+
+        if (type == "v") {
             Vec3 v;
             ss >> v.x >> v.y >> v.z;
             vertices.push_back(v);
-        } else if (op == "f") {
-            std::string v0, v1, v2;
-            ss >> v0 >> v1 >> v2;
-            int i = 0, j = 0, k = 0;
+        } else if (type == "vt") {
+            Vec2 vt;
+            ss >> vt.x >> vt.y;
+            uvs.push_back(vt);
+        } else if (type == "vn") {
+            Vec3 vn;
+            ss >> vn.x >> vn.y >> vn.z;
+            normals.push_back(vn);
+        } else if (type == "f") {
+            std::vector<FaceVertex> faceVertices;
+            std::string_view data = view.substr(split + 1);
+            //FaceVertex fv[3];
+            size_t start = 0;
+            while (true) {
+                start = data.find_first_not_of(' ', start);
+                if (start == std::string_view::npos) break;
 
-            std::from_chars(v0.data(), v0.data() + v0.size(), i);
-            std::from_chars(v1.data(), v1.data() + v1.size(), j);
-            std::from_chars(v2.data(), v2.data() + v2.size(), k);
+                size_t end = data.find(' ', start);
+                std::string_view tuple = data.substr(start, end - start);
+ 
+                FaceVertex fv;
+                parseFaceVertex(tuple, fv);
+                faceVertices.push_back(fv);
 
-            addTriangle(vertices[i - 1], vertices[j - 1], vertices[k - 1]);
+                start = end;
+            }
+
+            for (size_t i = 1; i < faceVertices.size() - 1; i++) {
+                const FaceVertex& fv0 = faceVertices[0];
+                const FaceVertex& fv1 = faceVertices[i];
+                const FaceVertex& fv2 = faceVertices[i + 1];
+
+                Vec3 v0 = vertices[fv0.vertexIdx];
+                Vec3 v1 = vertices[fv1.vertexIdx];
+                Vec3 v2 = vertices[fv2.vertexIdx];
+
+                Vec2 t0 = (fv0.uvIdx != -1) ? uvs[fv0.uvIdx] : Vec2(0.0f, 0.0f);
+                Vec2 t1 = (fv1.uvIdx != -1) ? uvs[fv1.uvIdx] : Vec2(1.0f, 0.0f);
+                Vec2 t2 = (fv2.uvIdx != -1) ? uvs[fv2.uvIdx] : Vec2(0.0f, 1.0f);
+
+                Vec3 n0, n1, n2;
+                if (fv0.normalIdx != -1) {
+                    n0 = normals[fv0.normalIdx];
+                    n1 = normals[fv1.normalIdx];
+                    n2 = normals[fv2.normalIdx];
+                } else {
+                    Vec3 faceNormal = glm::normalize(glm::cross(v1 - v0, v2 - v0));
+                    n0 = n1 = n2 = faceNormal;
+                }
+
+                addTriangle(make_shared<Triangle>(v0, v1, v2, t0, t1, t2, n0, n1, n2, mat));
+            }
+            /*
+                Vec3 v0 = vertices[fv[0].vertexIdx];
+                Vec3 v1 = vertices[fv[1].vertexIdx];
+                Vec3 v2 = vertices[fv[2].vertexIdx];
+
+                Vec2 t0 = (fv[0].uvIdx != -1) ? uvs[fv[0].uvIdx] : Vec2(0.0f, 0.0f);
+                Vec2 t1 = (fv[1].uvIdx != -1) ? uvs[fv[1].uvIdx] : Vec2(1.0f, 0.0f);
+                Vec2 t2 = (fv[2].uvIdx != -1) ? uvs[fv[2].uvIdx] : Vec2(0.0f, 1.0f);
+
+                Vec3 n0, n1, n2;
+                if (fv[0].normalIdx != -1) {
+                    n0 = normals[fv[0].normalIdx];
+                    n1 = normals[fv[1].normalIdx];
+                    n2 = normals[fv[2].normalIdx];
+                } else {
+                    Vec3 faceNormal = glm::normalize(glm::cross(v1 - v0, v2 - v0));
+                    n0 = n1 = n2 = faceNormal;
+                }
+            */
         }
     }
 
