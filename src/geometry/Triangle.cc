@@ -53,6 +53,9 @@ bool Triangle::hit(const Ray& ray, float tmin, float tmax, HitRecord& record) co
     Vec3 outwardNormal = glm::normalize(n0 + u * (n1 - n0) + v * (n2 - n0));
     record.setFaceNormal(ray, outwardNormal);
 
+    Vec3 outwardGeoNormal = glm::normalize(glm::cross(e1, e2));
+    record.setGeoNormal(ray, outwardGeoNormal);
+
     return true;
 }
 

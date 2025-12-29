@@ -10,6 +10,7 @@
 
 using Vec2 = glm::vec2;
 using Vec3 = glm::vec3;
+using Mat3 = glm::mat3;
 
 using std::make_shared;
 using std::shared_ptr;
@@ -32,6 +33,45 @@ inline int randi(int min, int max) {
     return int(randf(min, max + 1));
 }
 
+inline float GTR1(float cosTheta, float a) {
+    if (a >= 1.0f) return 1.0f / pi;
+    float a2 = a * a;
+    return (a2 - 1.0f) / (pi * std::log(a2) * (1.0f + (a2 - 1.0f) * cosTheta * cosTheta));
+}
+
+inline float GTR2(float cosTheta, float a) {
+    if (a >= 1.0f) return 1.0f / pi;
+    float a2 = a * a;
+    float denom = 1.0f + (a2 - 1.0f) * cosTheta * cosTheta;
+    return a2 / (pi * denom * denom);
+}
+
+inline float anisotropicGTR2(const Vec3& hl, float ax, float ay) {
+    float x = (hl.x * hl.x) / (ax * ax);
+    float y = (hl.y * hl.y) / (ay * ay);
+    float z = (hl.z * hl.z);
+    float denom = x + y + z;
+    return 1.0f / (pi * ax * ay * denom * denom);
+}
+
+inline float smithGGX(const Vec3& v, float a) {
+    return anisotropicSmithGGX(v, a, a);
+}
+
+inline float anisotropicSmithGGX(const Vec3& v, float ax, float ay) {
+    float t = (v.x * v.x * ax * ax + v.y * v.y * ay * ay) / (v.z * v.z);
+    float lambda = (std::sqrt(1.0f + t) - 1.0f) / 2.0f;
+    return 1.0f / (1.0f + lambda);
+}
+
+inline Vec2 rand2f() {
+    return Vec2(randf(), randf());
+}
+
+inline Vec2 rand2f(float min, float max) {
+    return Vec2(randf(min, max), randf(min, max));
+}
+
 inline Vec3 rand3f() {
     return Vec3(randf(), randf(), randf());
 }
@@ -48,13 +88,22 @@ inline Vec3 rand3funit() {
     }
 }
 
-inline Vec3 rand3fhs(const Vec3& normal) {
+inline Vec3 rand3fhs(const Vec3& n) {
     Vec3 unit = rand3funit();
-    if (glm::dot(unit, normal) > 0.0f) {
+    if (glm::dot(unit, n) > 0.0f) {
         return unit;
     } else {
         return -unit;
     }
+}
+
+// to do: remove matrix multiplication
+inline Vec3 rand3fcd(const Vec3& n) {
+    Vec2 u = rand2f(0.0f, 1.0f);
+    float r = std::sqrt(u.x);
+    float phi = 2.0f * pi * u.y;
+    Mat3 T = worldToLocal3x3(n);
+    return T * Vec3(r * std::cos(phi), r * std::sin(phi), std::sqrt(1.0f - u.x));
 }
 
 inline Vec3 sampleSquare() {
@@ -63,8 +112,34 @@ inline Vec3 sampleSquare() {
 
 constexpr float infinity = std::numeric_limits<float>::infinity();
 
+constexpr float pi = 3.1415927;
+
 constexpr float radians(float degrees) {
-    return degrees * (M_PI / 180.0f);
+    return degrees * (pi / 180.0f);
+}
+
+inline float schlick(float cosTheta, float F0) {
+    cosTheta = std::clamp(cosTheta, 0.0f, 1.0f);
+    float m = 1.0f - cosTheta;
+    float m5 = m * m * m * m * m;
+    return F0 + (1.0f - F0) * m5;
+}
+
+inline Vec3 schlick(float cosTheta, const Vec3& F0) {
+    cosTheta = std::clamp(cosTheta, 0.0f, 1.0f);
+    float m = 1.0f - cosTheta;
+    float m5 = m * m * m * m * m;
+    return F0 + (Vec3(1.0f) - F0) * m5;
+}
+
+// https://graphics.pixar.com/library/OrthonormalB/paper.pdf
+constexpr Mat3 worldToLocal3x3(const Vec3& n) {
+    float sign = std::copysign(1.0f, n.z);
+    const float a = -1.0f / (sign + n.z);
+    const float b = n.x * n.y * a;
+    Vec3 b1 = Vec3(1.0f + sign * n.x * n.x * a, sign * b, -sign * n.x);
+    Vec3 b2 = Vec3(b, sign + n.y * n.y * a, -n.y);
+    return glm::transpose(Mat3(b1, b2, n));
 }
 
 constexpr Vec3 reflect(const Vec3& v, const Vec3& n) {

@@ -61,12 +61,17 @@ bool RotateY::hit(const Ray& ray, float tmin, float tmax, HitRecord& record) con
     if (!object->hit(rotatedRay, tmin, tmax, record)) return false;
 
     Vec3 p = record.p;
-    record.p.x = cosTheta * p.x + sinTheta * p.z;
+    record.p.x =  cosTheta * p.x + sinTheta * p.z;
     record.p.z = -sinTheta * p.x + cosTheta * p.z;
 
     Vec3 normal = record.normal;
-    record.normal.x = cosTheta * normal.x + sinTheta * normal.z;
+    record.normal.x =  cosTheta * normal.x + sinTheta * normal.z;
     record.normal.z = -sinTheta * normal.x + cosTheta * normal.z;
+
+    // probably fix this, but just hard code for now
+    Vec3 ng = record.geometricNormal;
+    record.geometricNormal.x =  cosTheta * ng.x + sinTheta * ng.z;
+    record.geometricNormal.z = -sinTheta * ng.x + cosTheta * ng.z;
 
     return true;
 }
