@@ -12,7 +12,7 @@
 #include "geometry/Ray.h"
 #include "geometry/Mesh.h"
 #include "materials/Material.h"
-#include "materials/Dielectric.h"
+#include "materials/DisneyMaterial.h"
 
 int main(int argc, char *argv[]) {
     if (argc != 2) {
@@ -25,12 +25,27 @@ int main(int argc, char *argv[]) {
     Vec3 lookat = Vec3(0.0f, 0.0f, 0.0f);
 
     Camera camera(lookfrom, lookat, 800, 600, 75.0f);
-    camera.samplesPerPixel = 25;
+    camera.samplesPerPixel = 1000;
     camera.maxDepth = 25;
     camera.background = Vec3(0.6f, 0.7f, 1.0f);
 
     Scene scene;
-    auto redMat = make_shared<Dielectric>(Vec3(0.9f, 0.6f, 0.6f), 1.33f);
+    MaterialParams redParams = {
+        Vec3(0.9f, 0.1f, 0.1f),
+        0.0f,
+        0.0f,
+        0.5f,
+        0.0f,
+        0.25f,
+        0.0f,
+        0.0f,
+        0.0f,
+        1.0f,
+        1.0f,
+        1.5f,
+        0.0f
+    };
+    auto redMat = make_shared<DisneyMaterial>(redParams);
     auto shuttle = make_shared<Mesh>("assets/shuttle.obj", redMat);
     scene.add(make_shared<RotateY>(shuttle, 45.0f));
     scene.buildBVH();

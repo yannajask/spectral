@@ -1,193 +1,11 @@
 #include "DisneyMaterial.h"
 
-/*
-#pragma once
-
-#include "../utils.h"
-#include "Material.h"
-
-class DisneyMaterial : public Material {
-    public:
-        
-        DisneyMaterial(Vec3 kd, float ns, float metallic = 0.0f) : baseColour(kd), roughness(ns), metallic(metallic) {
-
-        }
-        
-
-        virtual bool scatter(const Ray& ray, const HitRecord& record, Vec3& attenuation, Ray& scattered) const {
-            Vec3 wo = glm::normalize(-ray.dir);
-            Vec3 wi = glm::normalize(scattered.dir);
-            Vec3 normal = record.normal;
-
-            float wDiffuse = (1.0f - metallic) * (1.0f - specTrans);
-            float wSheen = (1.0f - metallic) * sheen;
-            float wMetal = 1.0f - (specTrans * (1.0f - metallic));
-            float wGlass = (1.0f - metallic) * specTrans;
-            float wClearcoat = 0.25f * clearcoat;
-
-            // if inside, set all weights to 0 and only leave glass lobes
-            if (!record.frontFace) wDiffuse = wSheen = wMetal = wClearcoat = 0.0f;
-
-            float dotNV = glm::dot(wo, normal);
-            float dotNL = glm::dot(wi, normal);
-            bool reflect = (dotNV * dotNL > 0.0f);
-
-            Vec3 fd(0.0f);
-
-            if (reflect) {
-                if (wDiffuse > 0.0f) fd += wDiffuse * evaluateDiffuse();
-                if (wMetal > 0.0f) fd += wMetal * evaluateMetal();
-                if (wClearcoat > 0.0f) fd += wClearcoat * evaluateClearcoat();
-                if (sheen > 0.0f) fd += wSheen * evaluateSheen();
-                if (wGlass > 0.0f) fd += wGlass * evaluateGlassReflection();
-            } else if (wGlass > 0.0f) {
-                fd += wGlass * evaluateGlassTransmission();
-            }
-
-            return fd;
-        }
-
-        float scatterPdf(const Ray& ray, const HitRecord& record, const Ray& scattered) const {
-        }
-
-    private:
-        Vec3 baseColour;
-        float subsurface;
-        float metallic;
-        float specular;
-        float specularTint;
-        float roughness;
-        float sheen;
-        float sheenTint;
-        float clearcoat;
-        float clearcoatGloss;
-
-        float ior;
-        float specTrans;
-        Vec3 scatterDistance;
-
-        float diffTrans;
-        float flatness;
-        bool thin = false;
-
-        inline Vec3 evaluateDiffuse(const Vec3& wo, const Vec3& h, const Vec3& wi, const Vec3& n) const {
-            float absDotNL = absCosTheta(wi, n);
-            float absDotNV = absCosTheta(wo, n);
-            float dotHL = glm::dot(wi, h);
-
-            float FL = std::pow((1.0 - absDotNL), 5);
-            float FV = std::pow((1.0 - absDotNV), 5);
-            float RR = 2.0f * roughness * (dotHL * dotHL);
-
-            Vec3 fLambert = baseColour / pi;
-            Vec3 fRetro = (baseColour / pi) * RR * (FL + FV + (FL * FV) * (RR - 1.0f));
-
-            if (thin && flatness > 0.0f) {
-                float fss90 = dotHL * dotHL * roughness * roughness;
-                float fss = glm::mix(1.0f, fss90, FL) * glm::mix(1.0f, fss90, FV);
-                float ss = 1.25f * (fss * (1.0f / (absDotNL + absDotNV) - 0.5f) + 0.5f);
-                fLambert = glm::mix(fLambert, fLambert * ss * scatterDistance, flatness);
-            }
-
-            return fLambert * (1.0f - 0.5f * FL) * (1.0f - 0.5f * FV) + fRetro;
-        }
-
-        inline Vec3 calculateTint() const {
-            float luminance = glm::dot(Vec3(0.3f, 0.6f, 1.0f), baseColour);
-            return (luminance > 0.0f) ? baseColour * (1.0f / luminance) : Vec3(1.0f);
-        }
-
-        inline Vec3 evaluateSheen(const Vec3& wo, const Vec3& h, const Vec3& wi, const Vec3& n) const {
-            if (sheen <= 0.0f) {
-                return Vec3(0.0f);
-            } else {
-                float dotHL = glm::dot(h, wi);
-                Vec3 tint = calculateTint();
-                return sheen * glm::mix(Vec3(1.0f), tint, sheenTint) * schlick(dotHL);
-            }
-        }
-
-        inline Vec3 evaluateTransmission(const Vec3& wi, const Vec3& wo, const Vec3& n) const {
-            float absDotNL = absCosTheta(wi, n);
-            float absDotNV = absCosTheta(wo, n);
-
-            float eta = (glm::dot(wo, n) > 0.0f) ? (1.0f / ior) : ior;
-            Vec3 ht = -glm::normalize(wi + eta * wo);
-
-            float dotHL = glm::dot(ht, wi);
-            float dotHV = glm::dot(ht, wo);
-
-            float alpha = roughness * roughness;
-            float G = seperableSmithGGXG1(wo, n, alpha) * seperableSmithGGXG1(wi, n, alpha);
-            float D = GTR2(absCosTheta(ht, n), alpha);
-
-            float r0 = (ior - 1.0f) / (ior + 1.0f);
-            float F = schlick(dotHV, r0 * r0);
-
-            Vec3 colour = thin ? glm::sqrt(baseColour) : baseColour;
-            float c = (std::fabs(dotHL) * std::fabs(dotHV)) / (absDotNL * absDotNV);
-            float t = (eta * eta) / ((dotHL + eta * dotHV) * (dotHL + eta * dotHV));
-
-            return colour * c * t * (1.0f - F) * G * D;
-        }
-
-        inline Vec3 evaluateSpecular(const Vec3& wo, const Vec3& h, const Vec3& wi, const Vec3& n) const {
-            float dotNL = glm::dot(wi, n);
-            float dotNV = glm::dot(wo, n);
-            if (dotNL <= 0.0f || dotNV < 0.0f) {
-                return Vec3(0.0f);
-            } else {
-                float alpha = roughness * roughness;
-                float G = seperableSmithGGXG1(wo, n, alpha) * seperableSmithGGXG1(wi, n, alpha);
-                float D = GTR2(absCosTheta(h, n), alpha);
-
-                float absDotVH = absCosTheta(wo, h);
-                Vec3 tint = calculateTint();
-                float r0 = (ior - 1.0f) / (ior + 1.0f);
-                r0 *= r0;
-                Vec3 F0 = r0 * specular * glm::mix(Vec3(1.0f), tint, specularTint);
-                F0 = glm::mix(F0, baseColour, metallic);
-                Vec3 F = schlick(absDotVH, F0);
-
-                return (F * G * D) / (4.0f * std::abs(dotNL) * std::abs(dotNV));
-            }
-        }
-
-        inline Vec3 evaluateClearcoat(const Vec3& wo, const Vec3& h, const Vec3& wi, const Vec3& n, float& fPDFw, float& rPDFw) const {
-            if (clearcoat <= 0.0f) {
-                return Vec3(0.0f);
-            } else {
-                float absDotNH = absCosTheta(h, n);
-                float absDotNL = absCosTheta(wi, n);
-                float absDotNV = absCosTheta(wo, n);
-                float dotHL = glm::dot(h, wi);
-
-                float D = GTR1(absDotNH, glm::mix(0.1f, 0.001f, clearcoatGloss));
-                float F = schlick(dotHL);
-                float G = seperableSmithGGXG1(wi, n, 0.25f) * seperableSmithGGXG1(wo, n, 0.25f);
-
-                fPDFw = D / (4.0f * absDotNL);
-                rPDFw = D / (4.0f * absDotNV);
-
-                return Vec3(0.25f * clearcoat * F * G * D);
-            }
-        }
-
-        static float schlick(float cosTheta, float F0 = 0.04f) {
-            return F0 + (1.0f - F0) * std::pow((1.0f - cosTheta), 5);
-        }
-
-        static Vec3 schlick(float cosTheta, const Vec3& F0) {
-            return F0 + ((Vec3(1.0f) - F0) * std::powf((1.0f - cosTheta), 5));
-        }
-};
-
-
-*/
+DisneyMaterial::DisneyMaterial(const MaterialParams& p)
+     : params(p), diffuse(params), metal(params), glass(params), clearcoat(params), sheen(params) {}
 
 bool DisneyMaterial::scatter(const Ray& ray, const HitRecord& record, Vec3& attenuation, Ray& scattered) const {
     Vec3 wi = -glm::normalize(ray.dir);
-    float dotNGL = glm::dot(record.geometricNormal, wi);
+    float dotNGV = glm::dot(record.geometricNormal, wi);
 
     float diffuseWeight   = 0.0f;
     float sheenWeight     = 0.0f;
@@ -195,7 +13,7 @@ bool DisneyMaterial::scatter(const Ray& ray, const HitRecord& record, Vec3& atte
     float glassWeight     = (1.0f - params.metallic) * params.specTrans; 
     float clearcoatWeight = 0.0f;
 
-    if (dotNGL > 0.0f) {
+    if (dotNGV > 0.0f) {
         diffuseWeight   = (1.0f - params.metallic) * (1.0f - params.specTrans);
         sheenWeight     = (1.0f - params.metallic) * params.sheen;
         metalWeight     = (1.0f - params.specTrans * (1.0f - params.metallic));
@@ -205,9 +23,9 @@ bool DisneyMaterial::scatter(const Ray& ray, const HitRecord& record, Vec3& atte
     // ignore sheen for importance sampling
     float totalWeight = diffuseWeight + metalWeight + glassWeight + clearcoatWeight;
 
-    diffuseWeight /= totalWeight;
-    metalWeight /= totalWeight;
-    glassWeight /= totalWeight;
+    diffuseWeight   /= totalWeight;
+    metalWeight     /= totalWeight;
+    glassWeight     /= totalWeight;
     clearcoatWeight /= totalWeight;
 
     float r = randf(0.0f, 1.0f);
@@ -232,7 +50,16 @@ bool DisneyMaterial::scatter(const Ray& ray, const HitRecord& record, Vec3& atte
         attenuation = clearcoat.evaluate(wi, wo, record);
     }
 
-    if (sheenWeight > 0.0f) attenuation += sheen.evaluate(wi, wo, record) * sheenWeight;
+    if (sheenWeight > 0.0f) {
+        attenuation += sheen.evaluate(wi, wo, record) * sheenWeight;
+    }
+
+    if (pdf > 0.0f) {
+        float cosTheta = std::abs(glm::dot(record.normal, wo));
+        attenuation *= cosTheta / pdf;
+    } else {
+        attenuation = Vec3(0.0f);
+    }
 
     scattered = Ray(record.p, wo);
     return true;
@@ -241,32 +68,34 @@ bool DisneyMaterial::scatter(const Ray& ray, const HitRecord& record, Vec3& atte
 Vec3 Diffuse::evaluate(const Vec3& wi, const Vec3& wo, const HitRecord& record) const {
     // fDiffuse = (1 - subsurface) * fBaseDiffuse + subsurface * fSubsurface
     Vec3 h = glm::normalize(wi + wo);
-    float absDotNL = std::abs(glm::dot(record.normal, wi));
-    float absDotNV = std::abs(glm::dot(record.normal, wo));
-    float dotHV = glm::dot(h, wo);
+    float absDotNV = std::abs(glm::dot(record.normal, wi));
+    float absDotNL = std::abs(glm::dot(record.normal, wo));
+    float dotHL = glm::dot(h, wo);
 
-    float FD90 = 0.5f + 2.0f * params.roughness * (dotHV * dotHV);
-    float FDi = schlick(absDotNL, FD90);
-    float FDo = schlick(absDotNV, FD90);
+    float FD90 = 0.5f + 2.0f * params.roughness * (dotHL * dotHL);
+    float FDi = schlick(absDotNV, FD90);
+    float FDo = schlick(absDotNL, FD90);
 
     Vec3 fBaseDiffuse = (params.baseColour / pi) * FDi * FDo;
 
-    float Fss90 = params.roughness * (dotHV * dotHV);
-    float Fssi = schlick(absDotNL, Fss90);
-    float Fsso = schlick(absDotNV, Fss90);
+    float Fss90 = params.roughness * (dotHL * dotHL);
+    float Fssi = schlick(absDotNV, Fss90);
+    float Fsso = schlick(absDotNL, Fss90);
 
-    float lsLaw = (1.0f / (absDotNL + absDotNV)) - 0.5f;
+    float lsLaw = (1.0f / (absDotNV + absDotNL)) - 0.5f;
     Vec3 fSubsurface = (1.25f * params.baseColour / pi) * (Fssi * Fsso * lsLaw + 0.5f);
 
-    return glm::mix(fBaseDiffuse, fSubsurface, params.subsurface) * absDotNV;
+    return glm::mix(fBaseDiffuse, fSubsurface, params.subsurface);
 }
 
 Vec3 Metal::evaluate(const Vec3& wi, const Vec3& wo, const HitRecord& record) const {
     // fMetal = (Fm * Dm * Gm) / (4 |n * wi|)
-    float dotNL = glm::dot(record.normal, wi);
-    float dotNV = glm::dot(record.normal, wo);
+    float eta = record.frontFace ? (1.0f / params.ior) : params.ior;
 
-    if (dotNL <= 0.0f || dotNV <= 0.0f) return Vec3(0.0f);
+    float dotNV = glm::dot(record.normal, wi);
+    float dotNL = glm::dot(record.normal, wo);
+
+    if (dotNV <= 0.0f || dotNL <= 0.0f) return Vec3(0.0f);
 
     Mat3 worldToLocal = worldToLocal3x3(record.normal);
     Vec3 wil = worldToLocal * wi;
@@ -275,13 +104,13 @@ Vec3 Metal::evaluate(const Vec3& wi, const Vec3& wo, const HitRecord& record) co
     Vec3 h = glm::normalize(wi + wo);
     Vec3 hl = glm::normalize(wil + wol);
 
-    float absDotHV = std::abs(glm::dot(h, wo));
+    float absDotHL = std::abs(glm::dot(h, wo));
     float luminance = glm::dot(Vec3(0.3f, 0.6f, 1.0f), params.baseColour);
     Vec3 cTint = (luminance > 0.0f) ? params.baseColour / luminance : Vec3(1.0f);
     Vec3 Ks = (1.0f - params.specularTint) + params.specularTint * cTint;
-    float R0 = ((params.ior - 1.0f) * (params.ior - 1.0f)) / ((params.ior + 1.0f) * (params.ior + 1.0f));
+    float R0 = ((eta - 1.0f) * (eta - 1.0f)) / ((eta + 1.0f) * (eta + 1.0f));
     Vec3 C0 = params.specular * R0 * (1.0f - params.metallic) * Ks + params.metallic * params.baseColour;
-    Vec3 Fm = schlick(absDotHV, C0);
+    Vec3 Fm = schlick(absDotHL, C0);
 
     float aspect = std::sqrt(1.0f - 0.9f * params.anisotropic);
     float roughness2 = params.roughness * params.roughness;
@@ -291,27 +120,29 @@ Vec3 Metal::evaluate(const Vec3& wi, const Vec3& wo, const HitRecord& record) co
 
     float Gm = anisotropicSmithGGX(wil, ax, ay) * anisotropicSmithGGX(wol, ax, ay);
 
-    return (Fm * Dm * Gm) / (4.0f * std::fabs(dotNL));
+    return (Fm * Dm * Gm) / (4.0f * std::fabs(dotNV));
 }
 
 Vec3 Glass::evaluate(const Vec3& wi, const Vec3& wo, const HitRecord& record) const {
     // fGlass = (baseColour * Fg * Dg * Gg) / (4 * |n * wi|) if reflect
     //        = (sqrt(baseColour)(1 - Fg) * Dg * Gg * |h * wo * h * wi|) / (|n * wi| * (h * wi + n * h * wi))
+    float eta = record.frontFace ? (1.0f / params.ior) : params.ior;
+
     Mat3 worldToLocal = worldToLocal3x3(record.normal);
     Vec3 wil = worldToLocal * wi;
     Vec3 wol = worldToLocal * wo;
 
-    Vec3 h = glm::normalize(wi + wo);
+    float dotNGV = glm::dot(record.geometricNormal, wi);
+    float dotNGL = glm::dot(record.geometricNormal, wo);
+    bool reflect = (dotNGV * dotNGL > 0.0f);
+    
+    Vec3 h = (reflect) ? glm::normalize(wi + wo) : -glm::normalize(wi + eta * wo);
     Vec3 hl = glm::normalize(wil + wol);
 
-    float dotNGL = glm::dot(record.geometricNormal, wi);
-    float dotNGV = glm::dot(record.geometricNormal, wo);
-    float dotHL = glm::dot(h, wi);
-    float dotHV = glm::dot(h, wo);
+    float dotHV = glm::dot(h, wi);
+    float dotHL = glm::dot(h, wo);
 
-    float Rs = (dotHL - params.ior * dotHV) / (dotHL + params.ior * dotHV);
-    float Rp = (params.ior * dotHL - dotHV) / (params.ior * dotHL + dotHV);
-    float Fg = 0.5f * Rs * Rs + Rp * Rp;
+    float Fg = fresnel(std::abs(dotHV), eta);
 
     float aspect = std::sqrt(1.0f - 0.9f * params.anisotropic);
     float roughness2 = params.roughness * params.roughness;
@@ -321,14 +152,13 @@ Vec3 Glass::evaluate(const Vec3& wi, const Vec3& wo, const HitRecord& record) co
         
     float Gg = anisotropicSmithGGX(wil, ax, ay) * anisotropicSmithGGX(wol, ax, ay);
 
-    // this needs to be the geometric normal(hit record normal)
-    float absDotNV = std::fabs(glm::dot(wo, record.normal));
-    if (dotNGL * dotNGV > 0.0f) {
-        float absDotNL = std::abs(glm::dot(record.normal, wi));
-        return (params.baseColour * Fg * Dg * Gg) / (4.0f * absDotNL) * absDotNV;
+    float absDotNL = std::fabs(glm::dot(record.normal, wo));
+    float absDotNV = std::fabs(glm::dot(record.normal, wi));
+    if (reflect) {
+        return (params.baseColour * Fg * Dg * Gg) / (4.0f * absDotNV);
     } else {
-        float denom = dotHL + params.ior * dotHV;
-        return (glm::sqrt(params.baseColour) * (1.0f - Fg) * Dg * Gg * std::abs(dotHL * dotHV)) / (std::abs(dotHL) * denom * denom) * absDotNV;
+        float denom = dotHV + eta * dotHL;
+        return (glm::sqrt(params.baseColour) * (1.0f - Fg) * Dg * Gg * std::abs(dotHV * dotHL)) / (absDotNV * denom * denom);
     }
 }
 
@@ -343,16 +173,15 @@ Vec3 Clearcoat::evaluate(const Vec3& wi, const Vec3& wo, const HitRecord& record
     Vec3 h = glm::normalize(wi + wo);
     Vec3 hl = glm::normalize(wil + wol);
 
-    float absDotHV = std::abs(glm::dot(h, wo));
-    float Fc = schlick(absDotHV, 0.04f);
+    float absDotHL = std::abs(glm::dot(h, wo));
+    float Fc = schlick(absDotHL, 0.04f);
 
     float ag = (1.0f - params.clearcoatGloss) * 0.1f + params.clearcoatGloss * 0.001f;
     float Dc = GTR1(hl.z, ag);
     float Gc = smithGGX(wil, 0.25f) * smithGGX(wol, 0.25f);
     
-    float absDotNL = std::abs(glm::dot(record.normal, wi));
-    float absDotNV = std::abs(glm::dot(record.normal, wo));
-    return Vec3((Fc * Dc * Gc) / (4.0f * std::fabs(absDotNL))) * absDotNV;
+    float absDotNV = std::abs(glm::dot(record.normal, wi));
+    return Vec3((Fc * Dc * Gc) / (4.0f * std::fabs(absDotNV)));
 }
 
 Vec3 Sheen::evaluate(const Vec3& wi, const Vec3& wo, const HitRecord& record) const {
@@ -360,51 +189,141 @@ Vec3 Sheen::evaluate(const Vec3& wi, const Vec3& wo, const HitRecord& record) co
     if (params.sheen <= 0.0f) return Vec3(0.0f);
 
     Vec3 h = glm::normalize(wi + wo);
-    float absDotNV = std::abs(glm::dot(record.normal, wo));
-    float absDotHL = glm::dot(h, wi);
+    float absDotNL = std::abs(glm::dot(record.normal, wo));
+    float absDotHV = glm::dot(h, wi);
     float luminance = glm::dot(Vec3(0.3f, 0.6f, 1.0f), params.baseColour);
     Vec3 cTint = (luminance > 0.0f) ? params.baseColour / luminance : Vec3(1.0f);
     Vec3 cSheen = glm::mix(Vec3(1.0f), cTint, params.sheenTint);
-    return cSheen * std::powf(1.0f - absDotHL, 5) * absDotNV;
+    return cSheen * std::powf(1.0f - absDotHV, 5);
 }
 
 // -----------------
 
 // by default, lobes use cosine-weighted hemisphere sampling
-Vec3 Lobe::sample(const Vec3& wo, const HitRecord& record, float& pdf, const Vec2& sampler) const {
-    Vec3 wi = rand3fcd(record.normal);
-    pdf = glm::dot(record.normal, wi) / pi;
-    return wi;
+Vec3 Lobe::sample(const Vec3& wi, const HitRecord& record, float& pdf) const {
+    Vec3 wo = rand3fcd(record.normal);
+    pdf = glm::dot(record.normal, wo) / pi;
+    return wo;
 }
 
-Vec3 Metal::sample(const Vec3& wo, const HitRecord& record, float& pdf, const Vec2& sampler) const {
+Vec3 Metal::sample(const Vec3& wi, const HitRecord& record, float& pdf) const {
     float aspect = std::sqrt(1.0f - 0.9f * params.anisotropic);
     float roughness2 = params.roughness * params.roughness;
     float ax = std::max(0.0001f, roughness2 / aspect);
     float ay = std::max(0.0001f, roughness2 * aspect);
 
+    Mat3 worldToLocal = worldToLocal3x3(record.normal);
+    Vec3 wil = worldToLocal * wi;
+
+    Vec3 vh = glm::normalize(Vec3(ax * wil.x, ay * wil.y, wil.z));
+    Vec3 T1 = (vh.z < 0.9999f) ? glm::normalize(glm::cross(Vec3(0.0f, 0.0f, 1.0f), vh)) : Vec3(1.0f, 0.0f, 0.0f);
+    Vec3 T2 = glm::cross(vh, T1);
+
     Vec2 u = rand2f(0.0f, 1.0f);
-    float phi = 2.0f * pi * u.x;
-    float cosTheta2 = (1.0f - u.y) / (1.0f + (ax * ay - 1.0f) * u.x);
-    float sinTheta = std::sqrtf(std::fmax(0.0f, 1.0f - cosTheta2));
-    Vec3 hl = glm::normalize(Vec3(ax * sinTheta * std::cos(phi), ay * sinTheta * std::sin(phi), std::sqrtf(cosTheta2)));
+    float r = sqrt(u.x);
+    float phi = 2.0f * pi * u.y;
+    float t1 = r * std::cos(phi);
+    float t2 = r * std::sin(phi);
+    float s = 0.5f * (1.0f + vh.z);
+    t2 = (1.0f - s) * std::sqrt(1.0f - t1 * t1) + s * t2;
+
+    Vec3 nh = t1 * T1 + t2 * T2 + std::sqrt(std::fmax(0.0f, 1.0f - t1 * t1 - t2 * t2)) * vh;
+    Vec3 hl = glm::normalize(Vec3(ax * nh.x, ay * nh.y, std::fmax(0.0f, nh.z)));
+
     float Dm = anisotropicGTR2(hl, ax, ay);
+    float Gwi = anisotropicSmithGGX(wil, ax, ay);
+
+    pdf = (Dm * Gwi) / (4.0f * std::fabs(glm::dot(record.normal, wi)));
+
+    Vec3 wol = glm::normalize(glm::reflect(-wil, hl));
+    return glm::transpose(worldToLocal) * wol;
+}
+
+
+Vec3 Glass::sample(const Vec3& wi, const HitRecord& record, float& pdf) const {
+    float eta = record.frontFace ? (1.0f / params.ior) : params.ior;
+
+    float aspect = std::sqrt(1.0f - 0.9f * params.anisotropic);
+    float roughness2 = params.roughness * params.roughness;
+    float ax = std::max(0.0001f, roughness2 / aspect);
+    float ay = std::max(0.0001f, roughness2 * aspect);
 
     Mat3 worldToLocal = worldToLocal3x3(record.normal);
-    Vec3 wol = worldToLocal * wo;
-    Vec3 wil = glm::normalize(glm::reflect(-wol, hl));
-    pdf = (Dm * hl.z) / (4.0f * std::fabs(glm::dot(hl, wol)));
+    Vec3 wil = worldToLocal * wi;
 
-    return glm::transpose(worldToLocal) * wil;
-}
+    Vec3 vh = glm::normalize(Vec3(ax * wil.x, ay * wil.y, wil.z));
+    Vec3 T1 = (vh.z < 0.9999f) ? glm::normalize(glm::cross(Vec3(0.0f, 0.0f, 1.0f), vh)) : Vec3(1.0f, 0.0f, 0.0f);
+    Vec3 T2 = glm::cross(vh, T1);
 
-
-Vec3 Glass::sample(const Vec3& wo, const HitRecord& record, float& pdf, const Vec2& sampler) const {
     Vec2 u = rand2f(0.0f, 1.0f);
-    // todo
+    float r = sqrt(u.x);
+    float phi = 2.0f * pi * u.y;
+    float t1 = r * std::cos(phi);
+    float t2 = r * std::sin(phi);
+    float s = 0.5f * (1.0f + vh.z);
+    t2 = (1.0f - s) * std::sqrt(1.0f - t1 * t1) + s * t2;
+
+    Vec3 nh = t1 * T1 + t2 * T2 + std::sqrt(std::fmax(0.0f, 1.0f - t1 * t1 - t2 * t2)) * vh;
+    Vec3 hl = glm::normalize(Vec3(ax * nh.x, ay * nh.y, std::fmax(0.0f, nh.z)));
+    float dotHV = glm::dot(hl, wil);
+
+    float Fg = fresnel(std::abs(dotHV), eta);
+    float Dg = anisotropicGTR2(hl, ax, ay);
+    float Gg = anisotropicSmithGGX(wil, ax, ay);
+
+    float absDotNV = std::fabs(glm::dot(record.normal, wi));
+
+    Vec3 wol;
+    if (randf(0.0f, 1.0f) < Fg) {
+        reflect:
+        pdf = (Fg * Dg * Gg) / (4.0f * absDotNV);
+        wol = glm::normalize(glm::reflect(-wil, hl));
+    } else {
+        wol = glm::refract(-wil, hl, eta);
+        if (glm::length(wol) < 0.0001f) goto reflect;
+        wol = glm::normalize(wol);
+        float dotHL = glm::dot(hl, wol);
+        float denom = dotHV + eta * dotHL;
+        pdf = ((1.0f - Fg) * Dg * Gg * std::abs(dotHV * dotHL * eta * eta)) / (absDotNV * denom * denom);
+    }
+
+    return glm::transpose(worldToLocal) * wol;
 }
 
-Vec3 Clearcoat::sample(const Vec3& wo, const HitRecord& record, float& pdf, const Vec2& sampler) const {
+Vec3 Clearcoat::sample(const Vec3& wi, const HitRecord& record, float& pdf) const {
+    float ag = (1.0f - params.clearcoatGloss) * 0.1f + params.clearcoatGloss * 0.001f;
+
     Vec2 u = rand2f(0.0f, 1.0f);
-    // todo
+    float cosTheta = std::sqrtf((1.0f - std::powf(ag * ag, 1.0f - u.x)) / (1.0f - ag * ag));
+    float sinTheta = std::sqrtf(1.0f - cosTheta * cosTheta);
+    float phi = 2.0f * pi * u.y;
+    Vec3 hl = Vec3(sinTheta * std::cos(phi), sinTheta * std::sin(phi), cosTheta);
+
+    Mat3 localToWorld = glm::transpose(worldToLocal3x3(record.normal));
+    Vec3 h = glm::normalize(localToWorld * hl);
+    Vec3 wo = glm::normalize(glm::reflect(-wi, h));
+
+    float Dc = GTR1(hl.z, ag);
+    pdf = (Dc * std::fabs(glm::dot(record.normal, h))) / (4.0f * std::fabs(glm::dot(wo, h)));
+
+    return wo;
 }
+
+/*
+https://jcgt.org/published/0007/04/01/slides.pdf
+
+Vec3 vh = normalize(Vec3(ax * Ve.x, ay * Ve.y, Ve.z));
+// orthonormal basis
+Vec3 T1 = (vh.z < 0.9999f) ? normalize(cross(Vec3(0.0f, 0.0f, 1.0f), vh)) : Vec3(1.0f, 0.0f, 0.0f);
+Vec3 T2 = cross(vh, T1);
+
+float r = sqrt(u.x);
+float phi = 2.0f * pi * u.y;
+float t1 = r * cos(phi);
+float t2 = r * sin(phi);
+float s = 0.5f * (1.0f + vh.z);
+t2 = (1.0f - s) * sqrt(1.0 - t1 * t1) + s * t2;
+Vec3 nh = t1 * T1 + t2 * T2 + sqrt(max(0.0f, 1.0f - t1 * t1 - t2 * t2)) * vh;
+Vec3 Ne = normalize(Vec3(ax * nh.x, ay * nh.y, std::max(0.0f, nh.z)));
+
+*/

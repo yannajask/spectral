@@ -21,6 +21,9 @@ using std::unique_ptr;
 inline thread_local std::mt19937 rng(std::random_device{}());
 inline thread_local std::uniform_real_distribution<float> distribution(0.0, 1.0);
 
+constexpr float infinity = std::numeric_limits<float>::infinity();
+constexpr float pi = 3.1415927;
+
 inline float randf() {
     return distribution(rng);
 }
@@ -54,14 +57,24 @@ inline float anisotropicGTR2(const Vec3& hl, float ax, float ay) {
     return 1.0f / (pi * ax * ay * denom * denom);
 }
 
-inline float smithGGX(const Vec3& v, float a) {
-    return anisotropicSmithGGX(v, a, a);
-}
-
 inline float anisotropicSmithGGX(const Vec3& v, float ax, float ay) {
     float t = (v.x * v.x * ax * ax + v.y * v.y * ay * ay) / (v.z * v.z);
     float lambda = (std::sqrt(1.0f + t) - 1.0f) / 2.0f;
     return 1.0f / (1.0f + lambda);
+}
+
+inline float smithGGX(const Vec3& v, float a) {
+    return anisotropicSmithGGX(v, a, a);
+}
+
+// https://graphics.pixar.com/library/OrthonormalB/paper.pdf
+constexpr Mat3 worldToLocal3x3(const Vec3& n) {
+    float sign = std::copysign(1.0f, n.z);
+    const float a = -1.0f / (sign + n.z);
+    const float b = n.x * n.y * a;
+    Vec3 b1 = Vec3(1.0f + sign * n.x * n.x * a, sign * b, -sign * n.x);
+    Vec3 b2 = Vec3(b, sign + n.y * n.y * a, -n.y);
+    return glm::transpose(Mat3(b1, b2, n));
 }
 
 inline Vec2 rand2f() {
@@ -110,10 +123,6 @@ inline Vec3 sampleSquare() {
     return Vec3(randf() - 0.5f, randf() - 0.5f, 0.0f);
 }
 
-constexpr float infinity = std::numeric_limits<float>::infinity();
-
-constexpr float pi = 3.1415927;
-
 constexpr float radians(float degrees) {
     return degrees * (pi / 180.0f);
 }
@@ -132,14 +141,13 @@ inline Vec3 schlick(float cosTheta, const Vec3& F0) {
     return F0 + (Vec3(1.0f) - F0) * m5;
 }
 
-// https://graphics.pixar.com/library/OrthonormalB/paper.pdf
-constexpr Mat3 worldToLocal3x3(const Vec3& n) {
-    float sign = std::copysign(1.0f, n.z);
-    const float a = -1.0f / (sign + n.z);
-    const float b = n.x * n.y * a;
-    Vec3 b1 = Vec3(1.0f + sign * n.x * n.x * a, sign * b, -sign * n.x);
-    Vec3 b2 = Vec3(b, sign + n.y * n.y * a, -n.y);
-    return glm::transpose(Mat3(b1, b2, n));
+constexpr float fresnel(float cosThetaI, float eta) {
+    const float sinThetaT2 = eta * eta * (1.0f - cosThetaI * cosThetaI);
+    if (sinThetaT2 > 1.0f) return 1.0f;
+    const float cosThetaT = std::sqrt(std::max(0.0f, 1.0f - sinThetaT2));
+    const float Rs = (cosThetaI - eta * cosThetaT) / (cosThetaI + eta * cosThetaT);
+    const float Rp = (eta * cosThetaI - cosThetaT) / (eta * cosThetaI + cosThetaT);
+    return 0.5f * (Rs * Rs + Rp * Rp);
 }
 
 constexpr Vec3 reflect(const Vec3& v, const Vec3& n) {

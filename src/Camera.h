@@ -47,6 +47,7 @@ class Camera {
                     }
 
                     colour /= samplesPerPixel;
+                    colour = glm::sqrt(colour);
 
                     int r = int(255.999f * glm::clamp(colour.x, 0.0f, 1.0f));
                     int g = int(255.999f * glm::clamp(colour.y, 0.0f, 1.0f));

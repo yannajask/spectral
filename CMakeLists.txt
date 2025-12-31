@@ -29,6 +29,7 @@ add_executable(spectral
     src/geometry/BVH.cc
     src/geometry/Transform.cc
     src/materials/Dielectric.cc
+    src/materials/DisneyMaterial.cc
 )
 
 target_link_libraries(spectral PRIVATE OpenMP::OpenMP_CXX)
