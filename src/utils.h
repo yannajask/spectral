@@ -73,7 +73,7 @@ constexpr Mat3 worldToLocal3x3(const Vec3& n) {
     const float a = -1.0f / (sign + n.z);
     const float b = n.x * n.y * a;
     Vec3 b1 = Vec3(1.0f + sign * n.x * n.x * a, sign * b, -sign * n.x);
-    Vec3 b2 = Vec3(b, sign + n.y * n.y * a, -n.y);
+    Vec3 b2 = Vec3(sign * b, sign + n.y * n.y * a, -n.y);
     return glm::transpose(Mat3(b1, b2, n));
 }
 
@@ -115,7 +115,7 @@ inline Vec3 rand3fcd(const Vec3& n) {
     Vec2 u = rand2f(0.0f, 1.0f);
     float r = std::sqrt(u.x);
     float phi = 2.0f * pi * u.y;
-    Mat3 T = worldToLocal3x3(n);
+    Mat3 T = glm::transpose(worldToLocal3x3(n));
     return T * Vec3(r * std::cos(phi), r * std::sin(phi), std::sqrt(1.0f - u.x));
 }
 

@@ -18,7 +18,8 @@ class Camera {
         float fov, aspect, scale;
 
         unsigned int samplesPerPixel = 10;
-        unsigned int maxDepth = 10;
+        unsigned int minDepth = 3;
+        unsigned int maxDepth = 15;
 
         Vec3 background;
 
@@ -43,7 +44,7 @@ class Camera {
 
                     for (unsigned int sample = 0; sample < samplesPerPixel; sample++) {
                         Ray ray = getRay(col, row);
-                        colour += rayColour(ray, scene, maxDepth);
+                        colour += rayColour(ray, scene);
                     }
 
                     colour /= samplesPerPixel;
@@ -83,23 +84,32 @@ class Camera {
             return Ray(lookfrom, dir);
         }
 
-        Vec3 rayColour(const Ray& ray, const Scene& scene, unsigned int depth) const {
-            if (depth <= 0) return Vec3(0.0f, 0.0f, 0.0f);
+        Vec3 rayColour(const Ray& ray, const Scene& scene) const {
+            Ray current = ray;
+            Vec3 throughput = Vec3(1.0f);
 
-            HitRecord record;
+            for (unsigned int depth = 0; depth < maxDepth; depth++) {
+                HitRecord record;
 
-            if (scene.hit(ray, 0.001, infinity, record)) {
+                if (!scene.hit(current, 0.001, infinity, record)) return throughput * background;
+
                 Ray scattered;
                 Vec3 attenuation;
 
-                if (record.mat->scatter(ray, record, attenuation, scattered)) {
-                    return attenuation * rayColour(scattered, scene, depth - 1);
-                }
+                if (!record.mat->scatter(current, record, attenuation, scattered)) return throughput * background;
 
-                return Vec3(0.0f, 0.0f, 0.0f);
-            } else {
-                return background;
+                throughput *= attenuation;
+                current = scattered;
+
+                if (depth >= minDepth) {
+                    float p = std::max({throughput.r, throughput.g, throughput.b});
+                    p = std::clamp(p, 0.05f, 0.95f);
+                    if (randf() > p) return Vec3(0.0f);
+                    throughput /= p;
+                }
             }
+
+            return throughput;
         }
 
     private:
