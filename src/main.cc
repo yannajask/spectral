@@ -12,7 +12,7 @@
 #include "geometry/Ray.h"
 #include "geometry/Mesh.h"
 #include "materials/Material.h"
-#include "materials/DisneyMaterial.h"
+#include "materials/Disney.h"
 
 int main(int argc, char *argv[]) {
     if (argc != 2) {
@@ -30,8 +30,8 @@ int main(int argc, char *argv[]) {
     camera.background = Vec3(0.6f, 0.7f, 1.0f);
 
     Scene scene;
-    MaterialParams redParams = {
-        Vec3(1.0f),
+    DisneyParams redParams = {
+        Vec3(0.5f, 0.5f, 0.2f),
         0.0f,
         1.0f,
         0.5f,

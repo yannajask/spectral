@@ -1,6 +1,5 @@
-#pragma once
-
 #include "Disney.h"
+#include "../geometry/HitRecord.h"
 
 Vec3 Glass::evaluate(const Vec3& wi, const Vec3& wo, const HitRecord& record) const {
     // fGlass = (baseColour * Fg * Dg * Gg) / (4 * |n * wi|) if reflect

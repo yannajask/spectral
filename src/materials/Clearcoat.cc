@@ -1,6 +1,5 @@
-#pragma once
-
 #include "Disney.h"
+#include "../geometry/HitRecord.h"
 
 Vec3 Clearcoat::evaluate(const Vec3& wi, const Vec3& wo, const HitRecord& record) const {
     // fClearcoat = (Fc * Dc * Gc) / (4 |n * wi|)
@@ -34,7 +33,6 @@ BSDFSample Clearcoat::sample(const Vec3& wi, const HitRecord& record) const {
     float cosTheta = std::sqrtf((1.0f - std::powf(ag * ag, 1.0f - u.x)) / (1.0f - ag * ag));
     float sinTheta = std::sqrtf(1.0f - cosTheta * cosTheta);
     float phi = 2.0f * pi * u.y;
-
 
     Vec3 hl = Vec3(sinTheta * std::cos(phi), sinTheta * std::sin(phi), cosTheta);
     Mat3 localToWorld = glm::transpose(worldToLocal3x3(record.normal));

@@ -2,6 +2,7 @@
 
 #include "../utils.h"
 #include "BSDF.h"
+#include "Material.h"
 
 struct DisneyParams {
     Vec3 baseColour;
@@ -82,7 +83,7 @@ class DisneyBSDF : public BSDF {
         virtual float pdf(const Vec3& wi, const Vec3& wo, const HitRecord& record) const override;
 
     private:
-        DisneyParams params;
+        const DisneyParams& params;
 
         // lobes
         Diffuse diffuse;
@@ -101,4 +102,18 @@ class DisneyBSDF : public BSDF {
         };
 
         LobeWeights calculateWeights(const Vec3& wi, const HitRecord& record) const;
+};
+
+class DisneyMaterial : public Material {
+    public:
+        explicit DisneyMaterial(const DisneyParams& p);
+        virtual Vec3 evaluate(const Vec3& wi, const Vec3& wo, const HitRecord& record) const override;
+        virtual BSDFSample sample(const Vec3& wi, const HitRecord& record) const override;
+        virtual float pdf(const Vec3& wi, const Vec3& wo, const HitRecord& record) const override;
+
+
+    private:
+        DisneyParams params;
+        DisneyBSDF bsdf;
+
 };

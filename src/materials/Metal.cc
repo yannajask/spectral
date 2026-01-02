@@ -1,6 +1,5 @@
-#pragma once
-
 #include "Disney.h"
+#include "../geometry/HitRecord.h"
 
 Vec3 Metal::evaluate(const Vec3& wi, const Vec3& wo, const HitRecord& record) const {
     // fMetal = (Fm * Dm * Gm) / (4 |n * wi|)

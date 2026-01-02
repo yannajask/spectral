@@ -1,6 +1,5 @@
-#pragma once
-
 #include "Disney.h"
+#include "../geometry/HitRecord.h"
 
 Vec3 Diffuse::evaluate(const Vec3& wi, const Vec3& wo, const HitRecord& record) const {
     // fDiffuse = (1 - subsurface) * fBaseDiffuse + subsurface * fSubsurface

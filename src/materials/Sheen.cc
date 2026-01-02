@@ -1,6 +1,5 @@
-#pragma once
-
 #include "Disney.h"
+#include "../geometry/HitRecord.h"
 
 Vec3 Sheen::evaluate(const Vec3& wi, const Vec3& wo, const HitRecord& record) const {
     // fSheen = cSheen (1 - |h * wo|)^5 *  |n * wo|

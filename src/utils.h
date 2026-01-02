@@ -70,8 +70,8 @@ inline float smithGGX(const Vec3& v, float a) {
 // https://graphics.pixar.com/library/OrthonormalB/paper.pdf
 constexpr Mat3 worldToLocal3x3(const Vec3& n) {
     float sign = std::copysign(1.0f, n.z);
-    const float a = -1.0f / (sign + n.z);
-    const float b = n.x * n.y * a;
+    float a = -1.0f / (sign + n.z);
+    float b = n.x * n.y * a;
     Vec3 b1 = Vec3(1.0f + sign * n.x * n.x * a, sign * b, -sign * n.x);
     Vec3 b2 = Vec3(sign * b, sign + n.y * n.y * a, -n.y);
     return glm::transpose(Mat3(b1, b2, n));

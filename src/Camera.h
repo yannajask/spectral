@@ -3,6 +3,7 @@
 #include "utils.h"
 #include "geometry/Scene.h"
 #include "geometry/HitRecord.h"
+#include "materials/Material.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "../extern/stb/stb_image.h"
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -86,20 +87,22 @@ class Camera {
 
         Vec3 rayColour(const Ray& ray, const Scene& scene) const {
             Ray current = ray;
-            Vec3 throughput = Vec3(1.0f);
+            Vec3 throughput(1.0f);
 
             for (unsigned int depth = 0; depth < maxDepth; depth++) {
                 HitRecord record;
 
                 if (!scene.hit(current, 0.001, infinity, record)) return throughput * background;
 
-                Ray scattered;
-                Vec3 attenuation;
+                Vec3 wi = -glm::normalize(current.dir);
+                BSDFSample s = record.mat->sample(wi, record);
+                if (s.pdf <= 0.0f) return Vec3(0.0f);
 
-                if (!record.mat->scatter(current, record, attenuation, scattered)) return throughput * background;
+                Vec3 f = record.mat->evaluate(wi, s.wo, record);
+                float cosTheta = std::abs(glm::dot(record.normal, s.wo));
+                throughput *= (f * cosTheta) / s.pdf;
 
-                throughput *= attenuation;
-                current = scattered;
+                current = Ray(record.p, s.wo);
 
                 if (depth >= minDepth) {
                     float p = std::max({throughput.r, throughput.g, throughput.b});

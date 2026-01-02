@@ -1,7 +1,8 @@
 #pragma once
 
 #include "../utils.h"
-#include "../geometry/HitRecord.h"
+
+struct HitRecord;
 
 struct BSDFSample {
     Vec3 f{0.0f};

@@ -1,4 +1,5 @@
 #include "Disney.h"
+#include "../geometry/HitRecord.h"
 
 DisneyBSDF::DisneyBSDF(const DisneyParams& p)
      : params(p), diffuse(params), metal(params), glass(params), clearcoat(params), sheen(params) {}
@@ -80,4 +81,21 @@ DisneyBSDF::LobeWeights DisneyBSDF::calculateWeights(const Vec3& wi, const HitRe
     w.glass = (1.0f - params.metallic) * params.specTrans; 
 
     return w;
+}
+
+
+// ----------------
+
+DisneyMaterial::DisneyMaterial(const DisneyParams& p) : params(p), bsdf(params) {}
+
+Vec3 DisneyMaterial::evaluate(const Vec3& wi, const Vec3& wo, const HitRecord& record) const {
+    return bsdf.evaluate(wi, wo, record);
+}
+
+BSDFSample DisneyMaterial::sample(const Vec3& wi, const HitRecord& record) const {
+    return bsdf.sample(wi, record);
+}
+
+float DisneyMaterial::pdf(const Vec3& wi, const Vec3& wo, const HitRecord& record) const {
+    return bsdf.pdf(wi, wo, record);
 }
