@@ -12,7 +12,7 @@ include_directories(extern/lodepng)
 link_directories(/opt/homebrew/lib)
 
 set(OpenMP_C_FLAGS "-fopenmp")
-set(OpenMP_CXX_FLAGS "-fopenmp -Wall -g -O3 -march=native")
+set(OpenMP_CXX_FLAGS "-fopenmp -Wall -g -O3 -march=native -ffast-math")
 set(OpenMP_C_LIB_NAMES "omp")
 set(OpenMP_CXX_LIB_NAMES "omp")
 set(OpenMP_omp_LIBRARY "/opt/homebrew/opt/llvm/lib/libomp.dylib")

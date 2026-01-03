@@ -22,11 +22,11 @@ int main(int argc, char *argv[]) {
     }
     std::string file = argv[1];
     
-    Vec3 lookfrom = Vec3(3.0f, 4.0f, 25.0f);
+    Vec3 lookfrom = Vec3(15.0f, 4.0f, 25.0f);
     Vec3 lookat = Vec3(0.0f, -1.0f, 0.0f);
 
-    Camera camera(lookfrom, lookat, 800, 600, 75.0f);
-    camera.samplesPerPixel = 500;
+    Camera camera(lookfrom, lookat, 1600, 1200, 75.0f);
+    camera.maxSamples = 500;
     camera.background = make_shared<LinearGradient>(Vec3(0.0f, 0.0f, 0.0f), Vec3(0.02f, 0.05f, 0.2f));
 
     Scene scene;
@@ -51,7 +51,7 @@ int main(int argc, char *argv[]) {
     scene.addObject(make_shared<RotateY>(shuttle, 60.0f));
     scene.buildBVH();
 
-    scene.addLight(make_shared<PointLight>(Vec3(1.0f, 0.4f, 0.4f), 20.0f, Vec3(0.0f, 10.0f, -4.0f)));
+    scene.addLight(make_shared<PointLight>(Vec3(1.0f, 0.4f, 0.4f), 40.0f, Vec3(0.0f, 10.0f, -4.0f)));
     scene.addLight(make_shared<DirectionalLight>(Vec3(0.6f, 0.7f, 1.0f), 2.0f, Vec3(0.0f, -1.0f, 0.0f)));
     scene.buildLights();
 

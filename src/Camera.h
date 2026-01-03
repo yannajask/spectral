@@ -19,9 +19,10 @@ class Camera {
         unsigned int width, height;
         float fov, aspect, scale;
 
-        unsigned int samplesPerPixel = 10;
-        unsigned int minDepth = 3;
-        unsigned int maxDepth = 15;
+        unsigned int minSamples = 64;
+        unsigned int maxSamples = 1024;
+        unsigned int minDepth = 4;
+        unsigned int maxDepth = 16;
 
         shared_ptr<Texture> background;
 
@@ -38,19 +39,32 @@ class Camera {
         void render(const Scene& scene, std::string& outputPath) {
             std::vector<unsigned char> image(width * height * 3, 255);
             unsigned int rowsProcessed = 0;
+
+            const float eps = 0.001f;
             
             #pragma omp parallel for
             for (unsigned int row = 0; row < height; row++) {
                 for (unsigned int col = 0; col < width; col++) {
-                    Vec3 colour(0.0f);
+                    Vec3 mean(0.0f);
+                    Vec3 m2(0.0f);
 
-                    for (unsigned int sample = 0; sample < samplesPerPixel; sample++) {
+                    for (unsigned int sample = 0; sample < maxSamples; sample++) {
                         Ray ray = getRay(col, row);
-                        colour += rayColour(ray, scene);
+                        Vec3 sampleColour = rayColour(ray, scene);
+
+                        Vec3 diff = sampleColour - mean;
+                        mean += diff / float(sample + 1);
+                        Vec3 diff2 = sampleColour - mean;
+                        m2 += diff * diff2;
+                        
+                        if (sample > minSamples) {
+                            Vec3 var = m2 / float(sample);
+                            float err = std::sqrt(var.r + var.g + var.b);
+                            if (err < eps) break;
+                        }
                     }
 
-                    colour /= samplesPerPixel;
-                    colour = glm::sqrt(colour);
+                    Vec3 colour = glm::sqrt(mean);
 
                     int r = int(255.999f * glm::clamp(colour.x, 0.0f, 1.0f));
                     int g = int(255.999f * glm::clamp(colour.y, 0.0f, 1.0f));

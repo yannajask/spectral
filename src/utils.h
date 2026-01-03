@@ -18,14 +18,21 @@ using std::shared_ptr;
 using std::make_unique;
 using std::unique_ptr;
 
-inline thread_local std::mt19937 rng(std::random_device{}());
-inline thread_local std::uniform_real_distribution<float> distribution(0.0, 1.0);
-
-constexpr float infinity = std::numeric_limits<float>::infinity();
+constexpr float infinity = FLT_MAX;
 constexpr float pi = 3.1415927;
 
+inline unsigned int& getThreadSeed() {
+    static thread_local unsigned int seed = std::random_device{}();
+    if (seed == 0) seed = 1804289383;
+    return seed;
+}
+
 inline float randf() {
-    return distribution(rng);
+    unsigned int& s = getThreadSeed();
+    s ^= s << 13;
+    s ^= s >> 17;
+    s ^= s << 5;
+    return float(s) * (1.0f / float(UINT_MAX));
 }
 
 inline float randf(float min, float max) {
@@ -94,11 +101,10 @@ inline Vec3 rand3f(float min, float max) {
 }
 
 inline Vec3 rand3funit() {
-    while (true) {
-        Vec3 p = rand3f(-1, 1);
-        float lensq = glm::length2(p);
-        if (1e-160 < lensq && lensq <= 1) return p / sqrt(lensq);
-    }
+    float z = randf(-1.0f, 1.0f);
+    float a = randf(0.0f, 2.0f * pi);
+    float r = std::sqrt(1.0f - z * z);
+    return Vec3(r * std::cos(a), r * std::sin(a), z);
 }
 
 inline Vec3 rand3fhs(const Vec3& n) {
@@ -148,17 +154,6 @@ constexpr float fresnel(float cosThetaI, float eta) {
     const float Rs = (cosThetaI - eta * cosThetaT) / (cosThetaI + eta * cosThetaT);
     const float Rp = (eta * cosThetaI - cosThetaT) / (eta * cosThetaI + cosThetaT);
     return 0.5f * (Rs * Rs + Rp * Rp);
-}
-
-constexpr Vec3 reflect(const Vec3& v, const Vec3& n) {
-    return v - 2 * glm::dot(v, n) * n;
-}
-
-inline Vec3 refract(const Vec3& uv, const Vec3& n, float ratio) {
-    float cosTheta = std::fmin(dot(-uv, n), 1.0f);
-    Vec3 perp = ratio * (uv + cosTheta * n);
-    Vec3 parallel = -std::sqrt(std::fabs(1.0f - glm::length2(perp))) * n;
-    return perp + parallel;
 }
 
 #include "geometry/Ray.h"
