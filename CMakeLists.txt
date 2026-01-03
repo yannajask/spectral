@@ -34,6 +34,7 @@ add_executable(spectral
     src/materials/Glass.cc
     src/materials/Clearcoat.cc
     src/materials/Sheen.cc
+    src/lights/Light.cc
 )
 
 target_link_libraries(spectral PRIVATE OpenMP::OpenMP_CXX)

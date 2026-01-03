@@ -88,31 +88,45 @@ class Camera {
         Vec3 rayColour(const Ray& ray, const Scene& scene) const {
             Ray current = ray;
             Vec3 throughput(1.0f);
+            Vec3 radiance(0.0f);
 
             for (unsigned int depth = 0; depth < maxDepth; depth++) {
                 HitRecord record;
 
-                if (!scene.hit(current, 0.001, infinity, record)) return throughput * background;
+                if (!scene.hit(current, 0.001f, infinity, record)) {
+                    radiance += throughput * background;
+                    break;
+                }
 
-                Vec3 wi = -glm::normalize(current.dir);
+                Vec3 wi = -current.dir;
+
+                LightSample ls = scene.sampleLight(record);
+                Vec3 f = record.mat->evaluate(wi, ls.wo, record);
+                float cosTheta = std::max(0.0f, glm::dot(record.normal, ls.wo));
+
+                HitRecord tmp;
+                if (!scene.hit(Ray(record.p, ls.wo), 0.001f, ls.dist - 0.001f, tmp)) {
+                    radiance += (throughput * f * ls.Li * cosTheta) / ls.pdf;
+                }
+
                 BSDFSample s = record.mat->sample(wi, record);
-                if (s.pdf <= 0.0f) return Vec3(0.0f);
+                if (s.pdf <= 0.0f) break;
 
-                Vec3 f = record.mat->evaluate(wi, s.wo, record);
-                float cosTheta = std::abs(glm::dot(record.normal, s.wo));
-                throughput *= (f * cosTheta) / s.pdf;
+                Vec3 fNext = record.mat->evaluate(wi, s.wo, record);
+                float cosThetaNext = std::abs(glm::dot(record.normal, s.wo));
+                throughput *= (fNext * cosThetaNext) / s.pdf;
 
                 current = Ray(record.p, s.wo);
 
                 if (depth >= minDepth) {
                     float p = std::max({throughput.r, throughput.g, throughput.b});
                     p = std::clamp(p, 0.05f, 0.95f);
-                    if (randf() > p) return Vec3(0.0f);
+                    if (randf() > p) break;
                     throughput /= p;
                 }
             }
 
-            return throughput;
+            return radiance;
         }
 
     private:

@@ -21,34 +21,38 @@ int main(int argc, char *argv[]) {
     }
     std::string file = argv[1];
     
-    Vec3 lookfrom = Vec3(2.0f, 3.0f, 5.0f);
+    Vec3 lookfrom = Vec3(5.0f, 8.0f, 10.0f);
     Vec3 lookat = Vec3(0.0f, 0.0f, 0.0f);
 
     Camera camera(lookfrom, lookat, 800, 600, 75.0f);
     camera.samplesPerPixel = 1000;
-    camera.maxDepth = 25;
-    camera.background = Vec3(0.6f, 0.7f, 1.0f);
+    camera.background = Vec3(0.05f, 0.05f, 0.1f);
 
     Scene scene;
     DisneyParams redParams = {
         Vec3(0.5f, 0.5f, 0.2f),
         0.0f,
-        1.0f,
         0.5f,
         0.0f,
-        0.01f,
+        0.0f,
+        0.3f,
         0.0f,
         0.0f,
         0.0f,
         0.0f,
         0.0f,
         1.5f,
-        0.5f
+        0.0f
     };
+
     auto redMat = make_shared<DisneyMaterial>(redParams);
-    auto shuttle = make_shared<Mesh>("assets/cargo.obj", redMat);
-    scene.add(make_shared<RotateY>(shuttle, 60.0f));
+    auto shuttle = make_shared<Mesh>("assets/shuttle.obj", redMat);
+    scene.addObject(make_shared<RotateY>(shuttle, 60.0f));
     scene.buildBVH();
+
+    scene.addLight(make_shared<PointLight>(Vec3(1.0f, 0.4f, 0.4f), 50.0f, Vec3(-6.0f, 4.0f, -4.0f)));
+    scene.addLight(make_shared<DirectionalLight>(Vec3(0.6f, 0.7f, 1.0f), 2.0f, Vec3(0.0f, -1.0f, 0.0f)));
+    scene.buildLights();
 
     auto start = std::chrono::high_resolution_clock::now();
     camera.render(scene, file);

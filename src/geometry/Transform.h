@@ -21,5 +21,5 @@ class RotateY : public Object {
 
     private:
         shared_ptr<Object> object;
-        double sinTheta, cosTheta;
+        float sinTheta, cosTheta;
 };
