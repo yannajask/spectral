@@ -4,6 +4,7 @@
 #include "geometry/Scene.h"
 #include "geometry/HitRecord.h"
 #include "materials/Material.h"
+#include "textures/Texture.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "../extern/stb/stb_image.h"
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -22,7 +23,7 @@ class Camera {
         unsigned int minDepth = 3;
         unsigned int maxDepth = 15;
 
-        Vec3 background;
+        shared_ptr<Texture> background;
 
         Camera(const Vec3& lookfrom, const Vec3& lookat, unsigned int width, unsigned int height, float fov)
             : width(width), height(height), fov(fov), lookfrom(lookfrom) {
@@ -94,18 +95,21 @@ class Camera {
                 HitRecord record;
 
                 if (!scene.hit(current, 0.001f, infinity, record)) {
-                    radiance += throughput * background;
+                    Vec3 unitDir = glm::normalize(current.dir);
+                    float t = 0.5f * (unitDir.y + 1.0f);
+                    radiance += throughput * background->evaluate(0.0f, t, unitDir);
                     break;
                 }
 
                 Vec3 wi = -current.dir;
+                Vec3 orig = record.p + (record.normal * 0.0001f);
 
                 LightSample ls = scene.sampleLight(record);
                 Vec3 f = record.mat->evaluate(wi, ls.wo, record);
                 float cosTheta = std::max(0.0f, glm::dot(record.normal, ls.wo));
 
                 HitRecord tmp;
-                if (!scene.hit(Ray(record.p, ls.wo), 0.001f, ls.dist - 0.001f, tmp)) {
+                if (!scene.hit(Ray(orig, ls.wo), 0.001f, ls.dist - 0.001f, tmp)) {
                     radiance += (throughput * f * ls.Li * cosTheta) / ls.pdf;
                 }
 
@@ -116,7 +120,7 @@ class Camera {
                 float cosThetaNext = std::abs(glm::dot(record.normal, s.wo));
                 throughput *= (fNext * cosThetaNext) / s.pdf;
 
-                current = Ray(record.p, s.wo);
+                current = Ray(orig, s.wo);
 
                 if (depth >= minDepth) {
                     float p = std::max({throughput.r, throughput.g, throughput.b});
