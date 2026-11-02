@@ -1,8 +1,26 @@
 # Spectral
 
-A physically-based path tracer. Mostly serves as my playground for trying out new things I find online!
+A physically-based path tracer built off of my [initial pass](https://github.com/yannajask/raytracer) at Ray Tracing in One Weekend, and inspired heavily by PBRT. Mostly serves as my playground for trying out new things I find online, so some things might be implemented out of order.
 
 ![Red cessna](assets/redcessna.png)
+
+## Features
+
+- Principled Disney BSDF
+- Spatial acceleration via BVH trees
+- Sampling optimizations:
+  - Adaptive multi-sampling
+  - Multithreading with OpenMP
+  - Russian roulette termination
+- Basic OBJ mesh loader
+
+### To-do
+
+Nowadays I am more interested in GPU-accelerated graphics, but I still have a few features I'd like to implement:
+
+- [ ] Normal mapping
+- [ ] Texture mapping
+- [ ] MTL file support
 
 ## References
 
