@@ -6,6 +6,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <random>
 #include <cmath>
+#include <algorithm>
 #include <limits>
 
 using Vec2 = glm::vec2;
@@ -147,6 +148,13 @@ inline Vec3 schlick(float cosTheta, const Vec3& F0) {
     return F0 + (Vec3(1.0f) - F0) * m5;
 }
 
+inline float schlickDiffuse(float cosTheta, float F0) {
+    cosTheta = std::clamp(cosTheta, 0.0f, 1.0f);
+    float m = 1.0f - cosTheta;
+    float m5 = m * m * m * m * m;
+    return 1.0f + (F0 - 1.0f) * m5;
+}
+
 constexpr float fresnel(float cosThetaI, float eta) {
     const float sinThetaT2 = eta * eta * (1.0f - cosThetaI * cosThetaI);
     if (sinThetaT2 > 1.0f) return 1.0f;
@@ -154,6 +162,12 @@ constexpr float fresnel(float cosThetaI, float eta) {
     const float Rs = (cosThetaI - eta * cosThetaT) / (cosThetaI + eta * cosThetaT);
     const float Rp = (eta * cosThetaI - cosThetaT) / (eta * cosThetaI + cosThetaT);
     return 0.5f * (Rs * Rs + Rp * Rp);
+}
+
+inline float powerHeuristic(float pdf1, float pdf2) {
+    float f = pdf1 * pdf1;
+    float g = pdf2 * pdf2;
+    return f / (f + g);
 }
 
 #include "geometry/Ray.h"

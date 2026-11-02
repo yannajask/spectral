@@ -30,7 +30,7 @@ LightSample Scene::sampleLight(const HitRecord& record) const {
     if (!ld || lights.empty()) return ls;
 
     float pdf;
-    float i = ld->sample(pdf);
+    int i = ld->sample(pdf);
     const auto& light = lights[i];
     ls = light->sample(record);
     ls.pdf *= pdf;

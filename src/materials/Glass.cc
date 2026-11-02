@@ -33,10 +33,10 @@ Vec3 Glass::evaluate(const Vec3& wi, const Vec3& wo, const HitRecord& record) co
     float absDotNL = std::fabs(glm::dot(record.normal, wo));
     float absDotNV = std::fabs(glm::dot(record.normal, wi));
     if (reflect) {
-        return (params.baseColour * Fg * Dg * Gg) / (4.0f * absDotNV);
+        return (params.baseColour * Fg * Dg * Gg) / (4.0f * absDotNV * absDotNL);
     } else {
         float denom = dotHV + eta * dotHL;
-        return (glm::sqrt(params.baseColour) * (1.0f - Fg) * Dg * Gg * std::abs(dotHV * dotHL)) / (absDotNV * denom * denom);
+        return (glm::sqrt(params.baseColour) * (1.0f - Fg) * Dg * Gg * std::abs(dotHV * dotHL)) / (absDotNV * absDotNL * denom * denom);
     }
 }
 

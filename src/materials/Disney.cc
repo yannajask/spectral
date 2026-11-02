@@ -22,7 +22,7 @@ BSDFSample DisneyBSDF::sample(const Vec3& wi, const HitRecord& record) const {
     BSDFSample s;
 
     LobeWeights w = calculateWeights(wi, record);
-    float totalWeight = w.diffuse + w.metal + w.glass + w.clearcoat;
+    float totalWeight   = w.diffuse + w.metal + w.glass + w.clearcoat;
     float diffuseWeight = w.diffuse / totalWeight;
     float metalWeight   = w.metal / totalWeight;
     float glassWeight   = w.glass / totalWeight;
@@ -53,17 +53,22 @@ BSDFSample DisneyBSDF::sample(const Vec3& wi, const HitRecord& record) const {
 }
 
 float DisneyBSDF::pdf(const Vec3& wi, const Vec3& wo, const HitRecord& record) const {
+    
     LobeWeights w = calculateWeights(wi, record);
+    float totalWeight   = w.diffuse + w.metal + w.glass + w.clearcoat;
+    float diffuseWeight = w.diffuse / totalWeight;
+    float metalWeight   = w.metal / totalWeight;
+    float glassWeight   = w.glass / totalWeight;
+    float clearcoatWeight = w.clearcoat / totalWeight;
+    
+    float pdf = 0.0f;
 
-    float totalWeight = w.diffuse + w.metal + w.glass + w.clearcoat;
-    float totalPdf = 0.0f;
+    if (w.diffuse > 0.0f)   pdf += diffuseWeight * diffuse.pdf(wi, wo, record);
+    if (w.metal > 0.0f)     pdf += metalWeight * metal.pdf(wi, wo, record);
+    if (w.glass > 0.0f)     pdf += glassWeight * glass.pdf(wi, wo, record);
+    if (w.clearcoat > 0.0f) pdf += clearcoatWeight * clearcoat.pdf(wi, wo, record);
 
-    if (w.diffuse > 0.0f)   totalPdf += w.diffuse * diffuse.pdf(wi, wo, record);
-    if (w.metal > 0.0f)     totalPdf += w.metal * metal.pdf(wi, wo, record);
-    if (w.glass > 0.0f)     totalPdf += w.glass * glass.pdf(wi, wo, record);
-    if (w.clearcoat > 0.0f) totalPdf += w.clearcoat * clearcoat.pdf(wi, wo, record);
-
-    return totalPdf / totalWeight;
+    return pdf;
 }
 
 DisneyBSDF::LobeWeights DisneyBSDF::calculateWeights(const Vec3& wi, const HitRecord& record) const {

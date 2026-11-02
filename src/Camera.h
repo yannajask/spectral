@@ -116,23 +116,28 @@ class Camera {
                 }
 
                 Vec3 wi = -current.dir;
-                Vec3 orig = record.p + (record.normal * 0.0001f);
+                float sign = glm::dot(record.geometricNormal, wi) > 0.0f ? 1.0f : -1.0f;
+                Vec3 orig = record.p + (sign * record.geometricNormal * 0.001f);
 
                 LightSample ls = scene.sampleLight(record);
-                Vec3 f = record.mat->evaluate(wi, ls.wo, record);
-                float cosTheta = std::max(0.0f, glm::dot(record.normal, ls.wo));
+                if (ls.pdf > 0.0f) {
+                    float dotNGL = glm::dot(record.geometricNormal, ls.wo);
+                    if (dotNGL > 0.0f) {
+                        Vec3 f = record.mat->evaluate(wi, ls.wo, record);
+                        float cosTheta = std::max(0.0f, glm::dot(record.normal, ls.wo));
 
-                HitRecord tmp;
-                if (!scene.hit(Ray(orig, ls.wo), 0.001f, ls.dist - 0.001f, tmp)) {
-                    radiance += (throughput * f * ls.Li * cosTheta) / ls.pdf;
+                        HitRecord tmp;
+                        if (!scene.hit(Ray(orig, ls.wo), 0.001f, ls.dist - 0.001f, tmp)) {
+                            float bsdfPdf = record.mat->pdf(wi, ls.wo, record);
+                            float weight = powerHeuristic(ls.pdf, bsdfPdf);
+                            radiance += (throughput * f * ls.Li * cosTheta * weight) / ls.pdf;
+                        }
+                    }
                 }
 
                 BSDFSample s = record.mat->sample(wi, record);
                 if (s.pdf <= 0.0f) break;
-
-                Vec3 fNext = record.mat->evaluate(wi, s.wo, record);
-                float cosThetaNext = std::abs(glm::dot(record.normal, s.wo));
-                throughput *= (fNext * cosThetaNext) / s.pdf;
+                throughput *= s.f;
 
                 current = Ray(orig, s.wo);
 
